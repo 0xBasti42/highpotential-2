@@ -38,7 +38,7 @@ pragma solidity ^0.8.34;
  *
  */
 
-import { AggregatorV3Interface } from "@core/base/interfaces/AggregatorV3Interface.sol";
+import { IAggregatorV3 } from "@core/base/interfaces/IAggregatorV3.sol";
 import { SD59x18, exp, sd } from "@prb-math/src/SD59x18.sol";
 
 /**
@@ -99,7 +99,7 @@ abstract contract DynamicFee {
 
         uint8 _dec = 8;
         if (CHAINLINK_ETH_USD != address(0)) {
-            try AggregatorV3Interface(CHAINLINK_ETH_USD).decimals() returns (uint8 d) {
+            try IAggregatorV3(CHAINLINK_ETH_USD).decimals() returns (uint8 d) {
                 _dec = d;
             } catch { }
         }
@@ -191,7 +191,7 @@ abstract contract DynamicFee {
     function _ethPriceUsd() internal view returns (uint256 ethPriceUsd) {
         if (CHAINLINK_ETH_USD == address(0)) return FALLBACK_ETH_PRICE;
 
-        try AggregatorV3Interface(CHAINLINK_ETH_USD).latestRoundData() returns (
+        try IAggregatorV3(CHAINLINK_ETH_USD).latestRoundData() returns (
             uint80 roundId, int256 answer, uint256, /* startedAt */ uint256 updatedAt, uint80 answeredInRound
         ) {
             if (answer > 0 && updatedAt != 0 && answeredInRound >= roundId) {

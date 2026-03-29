@@ -3,14 +3,7 @@ pragma solidity ^0.8.34;
 
 import { ERC20 } from "@oz/contracts/token/ERC20/ERC20.sol";
 import { ERC20Permit } from "@oz/contracts/token/ERC20/extensions/ERC20Permit.sol";
-
-error PoolLocked();
-error HP20InvalidAllocation();
-error HP20InvalidBeneficiary();
-error HP20Unauthorized();
-error HP20ZeroController();
-
-address constant PERMIT_2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+import { IAddressBook } from "@base/interfaces/IAddressBook.sol";
 
 /**
  * @title HP20 | HighPotential
@@ -20,10 +13,44 @@ address constant PERMIT_2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
  * @custom:security-contact security@islalabs.co
  */
 contract HP20 is ERC20Permit {
-    address public immutable controller;
+    address public immutable ADDRESS_BOOK;
+
+    address constant PERMIT_2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
+    // --------------------------------------------
+    //  Configuration
+    // --------------------------------------------
 
     address public pool;
     bool public isPoolUnlocked;
+
+    // --------------------------------------------
+    //  Events and Errors
+    // --------------------------------------------
+
+    error NoAddressBook();
+    error InvalidAllocation();
+    error InvalidBeneficiary();
+    error Unauthorized();
+    error PoolLocked();
+
+    // --------------------------------------------
+    //  Access Control
+    // --------------------------------------------
+
+    modifier onlyInitializer() {
+        if (msg.sender != controller) revert Unauthorized();
+        _;
+    }
+
+    modifier onlyMigrator() {
+        if (msg.sender != controller) revert Unauthorized();
+        _;
+    }
+
+    // --------------------------------------------
+    //  Initialization
+    // --------------------------------------------
 
     constructor(
         string memory name_,
@@ -32,46 +59,45 @@ contract HP20 is ERC20Permit {
         address recipient,
         address beneficiary,
         uint256 beneficiaryAmount,
-        address controller_
+        address addressBook_
     ) ERC20(name_, symbol_) ERC20Permit(name_) {
-        if (controller_ == address(0)) revert HP20ZeroController();
-        controller = controller_;
-        if (beneficiaryAmount > initialSupply) revert HP20InvalidAllocation();
+        if (addressBook_ == address(0)) revert NoAddressBook();
+
+        ADDRESS_BOOK = addressBook_;
+
+        if (beneficiaryAmount > initialSupply) revert InvalidAllocation();
+
         if (beneficiaryAmount != 0) {
-            if (beneficiary == address(0)) revert HP20InvalidBeneficiary();
+            if (beneficiary == address(0)) revert InvalidBeneficiary();
             _mint(beneficiary, beneficiaryAmount);
         }
+
         _mint(recipient, initialSupply - beneficiaryAmount);
     }
 
-    modifier onlyController() {
-        if (msg.sender != controller) revert HP20Unauthorized();
-        _;
-    }
+    // --------------------------------------------
+    //  Pool Management
+    // --------------------------------------------
 
     function lockPool(
         address pool_
-    ) external onlyController {
+    ) external onlyInitializer {
         pool = pool_;
         isPoolUnlocked = false;
     }
 
-    function unlockPool() external onlyController {
+    function unlockPool() external onlyMigrator {
         isPoolUnlocked = true;
     }
+
+    // --------------------------------------------
+    //  Asset Management
+    // --------------------------------------------
 
     function burn(
         uint256 amount
     ) external {
         _burn(msg.sender, amount);
-    }
-
-    function allowance(
-        address owner,
-        address spender
-    ) public view override returns (uint256) {
-        if (spender == PERMIT_2) return type(uint256).max;
-        return super.allowance(owner, spender);
     }
 
     function _update(
@@ -81,5 +107,13 @@ contract HP20 is ERC20Permit {
     ) internal override {
         if (to == pool && !isPoolUnlocked) revert PoolLocked();
         super._update(from, to, value);
+    }
+
+    function allowance(
+        address owner,
+        address spender
+    ) public view override returns (uint256) {
+        if (spender == PERMIT_2) return type(uint256).max;
+        return super.allowance(owner, spender);
     }
 }
