@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.34;
 
-import { ERC20 } from "@openzeppelin/token/ERC20/ERC20.sol";
-import { ERC20Snapshot } from "src/extensions/ERC20Snapshot.sol";
+import { ERC20Snapshot } from "@base/ERC20Snapshot.sol";
 
-contract CVCERC20 is ERC20, ERC20Snapshot {
+contract CVCERC20 is ERC20Snapshot {
     address public immutable vault;
 
     error OnlyVault();

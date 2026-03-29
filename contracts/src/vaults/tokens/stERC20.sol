@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.34;
 
-import { ERC20 } from "@openzeppelin/token/ERC20/ERC20.sol";
-import { ERC20Snapshot } from "src/extensions/ERC20Snapshot.sol";
-import { ERC20Permit } from "@openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
+import { ERC20 } from "@oz/contracts/token/ERC20/ERC20.sol";
+import { ERC20Permit } from "@oz/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import { ERC20Snapshot } from "@base/ERC20Snapshot.sol";
 
 /**
  * @title HighPotential Staked Token (st.TOKEN)
