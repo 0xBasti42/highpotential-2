@@ -48,13 +48,11 @@ contract UniswapV4MigratorSplitHook is BaseHook {
     }
 
     /// @inheritdoc BaseHook
-    function _beforeInitialize(address sender, PoolKey calldata, uint160)
-        internal
-        view
-        override
-        onlyMigrator(sender)
-        returns (bytes4)
-    {
+    function _beforeInitialize(
+        address sender,
+        PoolKey calldata,
+        uint160
+    ) internal view override onlyMigrator(sender) returns (bytes4) {
         return BaseHook.beforeInitialize.selector;
     }
 

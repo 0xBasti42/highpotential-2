@@ -84,11 +84,13 @@ contract UniswapV4Initializer is IPoolInitializer, ImmutableAirlock {
     }
 
     /// @inheritdoc IPoolInitializer
-    function initialize(address asset, address numeraire, uint256 numTokensToSell, bytes32 salt, bytes calldata data)
-        external
-        onlyAirlock
-        returns (address)
-    {
+    function initialize(
+        address asset,
+        address numeraire,
+        uint256 numTokensToSell,
+        bytes32 salt,
+        bytes calldata data
+    ) external onlyAirlock returns (address) {
         (,,,, int24 startingTick,,,, bool isToken0,,, int24 tickSpacing) = abi.decode(
             data, (uint256, uint256, uint256, uint256, int24, int24, uint256, int24, bool, uint256, uint24, int24)
         );

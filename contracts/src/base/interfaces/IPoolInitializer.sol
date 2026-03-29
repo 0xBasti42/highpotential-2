@@ -13,9 +13,13 @@ interface IPoolInitializer {
      * @param data Arbitrary data to pass
      * @param pool Address of the freshly deployed pool or the hook
      */
-    function initialize(address asset, address numeraire, uint256 numTokensToSell, bytes32 salt, bytes calldata data)
-        external
-        returns (address pool);
+    function initialize(
+        address asset,
+        address numeraire,
+        uint256 numTokensToSell,
+        bytes32 salt,
+        bytes calldata data
+    ) external returns (address pool);
 
     /**
      * @notice Removes liquidity from a pool

@@ -17,11 +17,13 @@ contract TokenFactory is ITokenFactory, ImmutableAirlock {
      * @param salt Salt used for the create2 deployment
      * @param data Creation parameters encoded as bytes
      */
-    function create(uint256 initialSupply, address recipient, address owner, bytes32 salt, bytes calldata data)
-        external
-        onlyAirlock
-        returns (address)
-    {
+    function create(
+        uint256 initialSupply,
+        address recipient,
+        address owner,
+        bytes32 salt,
+        bytes calldata data
+    ) external onlyAirlock returns (address) {
         (
             string memory name,
             string memory symbol,

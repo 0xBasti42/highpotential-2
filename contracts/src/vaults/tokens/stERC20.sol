@@ -15,10 +15,12 @@ contract STERC20 is ERC20, ERC20Snapshot, ERC20Permit {
 
     error OnlyVault();
 
-    constructor(string memory name_, string memory symbol_, address vault_, uint256 initialSupplyToVault)
-        ERC20(name_, symbol_)
-        ERC20Permit(name_)
-    {
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        address vault_,
+        uint256 initialSupplyToVault
+    ) ERC20(name_, symbol_) ERC20Permit(name_) {
         require(vault_ != address(0), "VAULT_ZERO");
         vault = vault_;
         if (initialSupplyToVault > 0) _mint(vault_, initialSupplyToVault);
