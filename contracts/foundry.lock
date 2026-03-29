@@ -5,6 +5,12 @@
       "rev": "793106cd598da8b2762958880300787b0b361fa1"
     }
   },
+  "lib/doppler": {
+    "tag": {
+      "name": "v1.3.0",
+      "rev": "29e101779d8a638a6ce191de670cabb7cf96aa65"
+    }
+  },
   "lib/forge-std": {
     "tag": {
       "name": "v1.15.0",
