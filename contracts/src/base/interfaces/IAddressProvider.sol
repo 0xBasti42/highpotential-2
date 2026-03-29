@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IAddressBook {
+interface IAddressProvider {
     function version() external view returns (uint256);
     function get(bytes32 key) external view returns (address);
     function getByName(string calldata name) external view returns (address);

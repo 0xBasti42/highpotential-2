@@ -4,18 +4,18 @@ pragma solidity ^0.8.34;
 import { ERC20 } from "@oz/contracts/token/ERC20/ERC20.sol";
 import { ERC20Permit } from "@oz/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { PoolKey } from "@v4-core/types/PoolKey.sol";
-import { IAddressBook } from "@base/interfaces/IAddressBook.sol";
+import { IAddressProvider } from "@base/interfaces/IAddressProvider.sol";
 
 /**
  * @title HP20 | HighPotential
  * @author Isla Labs (Tom Jarvis | 0xBasti42)
  * @notice Fixed-supply player token with Uniswap v4 `PoolKey` tracking, LBP hook lock, EIP-2612 permit, and URI metadata.
- * @dev Register on `ADDRESS_BOOK`: `PERMIT_2`, `INITIALIZER`, `MIGRATOR`, `METADATA_ADMIN` (updates URI / hash).
+ * @dev Register on `ADDRESS_PROVIDER`: `PERMIT_2`, `INITIALIZER`, `MIGRATOR`, `METADATA_ADMIN` (updates URI / hash).
  * @custom:experimental DeFi markets covering EPL, NFL, NBA, and more. | Learn more at https://docs.highpotential.io/
  * @custom:security-contact security@islalabs.co
  */
 contract HP20 is ERC20Permit {
-    address public immutable ADDRESS_BOOK;
+    IAddressProvider public immutable ADDRESS_PROVIDER;
 
     // --------------------------------------------
     //  Metadata
@@ -55,17 +55,17 @@ contract HP20 is ERC20Permit {
     // --------------------------------------------
 
     modifier onlyInitializer() {
-        if (msg.sender != IAddressBook(ADDRESS_BOOK).getByName("INITIALIZER")) revert Unauthorized();
+        if (msg.sender != IAddressProvider(ADDRESS_PROVIDER).getByName("INITIALIZER")) revert Unauthorized();
         _;
     }
 
     modifier onlyMigrator() {
-        if (msg.sender != IAddressBook(ADDRESS_BOOK).getByName("MIGRATOR")) revert Unauthorized();
+        if (msg.sender != IAddressProvider(ADDRESS_PROVIDER).getByName("MIGRATOR")) revert Unauthorized();
         _;
     }
 
     modifier onlyOrchestrator() {
-        if (msg.sender != IAddressBook(ADDRESS_BOOK).getByName("ORCHESTRATOR")) revert Unauthorized();
+        if (msg.sender != IAddressProvider(ADDRESS_PROVIDER).getByName("ORCHESTRATOR")) revert Unauthorized();
         _;
     }
 
@@ -80,13 +80,13 @@ contract HP20 is ERC20Permit {
         address recipient,
         address beneficiary,
         uint256 beneficiaryAmount,
-        address addressBook_,
+        address addressProvider_,
         string memory tokenURI_,
         bytes32 metadataHash_
     ) ERC20(name_, symbol_) ERC20Permit(name_) {
-        if (addressBook_ == address(0)) revert NoAddressBook();
+        if (addressProvider_ == address(0)) revert NoAddressBook();
 
-        ADDRESS_BOOK = addressBook_;
+        ADDRESS_PROVIDER = IAddressProvider(address(addressProvider_));
         tokenURI = tokenURI_;
         metadataHash = metadataHash_;
 
@@ -142,7 +142,7 @@ contract HP20 is ERC20Permit {
     // --------------------------------------------
 
     function allowance(address owner, address spender) public view override returns (uint256) {
-        if (spender == IAddressBook(ADDRESS_BOOK).getByName("PERMIT_2")) return type(uint256).max;
+        if (spender == IAddressProvider(ADDRESS_PROVIDER).getByName("PERMIT_2")) return type(uint256).max;
         return super.allowance(owner, spender);
     }
 

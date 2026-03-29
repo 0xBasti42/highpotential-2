@@ -2,23 +2,29 @@
 pragma solidity ^0.8.34;
 
 import { IPoolManager } from "@v4-core/PoolManager.sol";
-import { Doppler } from "@markets/hooks/Doppler.sol";
+import { Doppler } from "@doppler/initializers/Doppler.sol";
+import { StandardizedBondingCurve } from "@markets/StandardizedBondingCurve.sol";
 
 /**
  * @title DopplerFactory | HighPotential
  * @author Isla Labs (Tom Jarvis | 0xBasti42)
+ * @notice Standalone CREATE2 deployer for the canonical bonding curve (same encoding as `Initializer` + `DopplerDeployer`)
  * @custom:experimental DeFi markets covering EPL, NFL, NBA, and more. | Learn more at https://docs.highpotential.io/
  * @custom:security-contact security@islalabs.co
  */
 contract DopplerFactory {
-    // These variables are purposely not immutable to avoid hitting the contract size limit
     IPoolManager public poolManager;
 
     constructor(IPoolManager poolManager_) {
         poolManager = poolManager_;
     }
 
-    function deploy(uint256 numTokensToSell, bytes32 salt, bytes calldata data) external returns (Doppler) {
+    /// @param salt CREATE2 salt chosen by the caller (e.g. `keccak256(abi.encode("HP:Doppler", asset, factory, chainid, nonce))`)
+    function deploy(bytes32 salt) external returns (Doppler) {
+        uint256 saleStart = block.timestamp + StandardizedBondingCurve.SALE_DELAY;
+        uint256 saleEnd = saleStart + StandardizedBondingCurve.SALE_DURATION;
+        bytes memory data = StandardizedBondingCurve.dopplerInitPayload(saleStart, saleEnd);
+
         (
             uint256 minimumProceeds,
             uint256 maximumProceeds,
@@ -35,9 +41,9 @@ contract DopplerFactory {
             data, (uint256, uint256, uint256, uint256, int24, int24, uint256, int24, bool, uint256, uint24, int24)
         );
 
-        Doppler doppler = new Doppler{ salt: salt }(
+        return new Doppler{ salt: salt }(
             poolManager,
-            numTokensToSell,
+            StandardizedBondingCurve.TOKENS_TO_SELL,
             minimumProceeds,
             maximumProceeds,
             startingTime,
@@ -51,7 +57,5 @@ contract DopplerFactory {
             msg.sender,
             lpFee
         );
-
-        return doppler;
     }
 }

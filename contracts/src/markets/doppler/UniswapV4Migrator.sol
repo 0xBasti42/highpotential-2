@@ -13,12 +13,12 @@ import { PoolKey } from "@v4-core/types/PoolKey.sol";
 import { PositionManager } from "@v4-periphery/PositionManager.sol";
 import { Actions } from "@v4-periphery/libraries/Actions.sol";
 import { LiquidityAmounts } from "@v4-periphery/libraries/LiquidityAmounts.sol";
-import { Airlock } from "src/Airlock.sol";
+import { Ownable } from "@oz/contracts/access/Ownable.sol";
+import { ImmutableRegistry } from "@base/ImmutableRegistry.sol";
+import { ILiquidityMigrator } from "@base/interfaces/ILiquidityMigrator.sol";
 import { StreamableFeesLocker } from "src/StreamableFeesLocker.sol"; // Check
 import { TopUpDistributor } from "src/TopUpDistributor.sol"; // Check
-import { ImmutableAirlock } from "src/base/ImmutableAirlock.sol"; // Check
 import { ProceedsSplitter, SplitConfiguration } from "src/base/ProceedsSplitter.sol"; // Check
-import { ILiquidityMigrator } from "src/interfaces/ILiquidityMigrator.sol";
 import { isTickSpacingValid } from "src/libraries/TickLibrary.sol";
 import { BeneficiaryData, MIN_PROTOCOL_OWNER_SHARES, storeBeneficiaries } from "src/types/BeneficiaryData.sol"; // Check
 import { DEAD_ADDRESS, EMPTY_ADDRESS } from "src/types/Constants.sol"; // Check
@@ -67,7 +67,7 @@ error ZeroLiquidity();
  * @notice Module contract to migrate liquidity from a Doppler Dutch auction pool to a
  * regular Uniswap V4 pool
  */
-contract UniswapV4MigratorSplit is ILiquidityMigrator, ImmutableAirlock, ProceedsSplitter {
+contract UniswapV4MigratorSplit is ILiquidityMigrator, ImmutableRegistry, ProceedsSplitter {
     using StateLibrary for IPoolManager;
     using PoolIdLibrary for PoolKey;
 
@@ -91,20 +91,20 @@ contract UniswapV4MigratorSplit is ILiquidityMigrator, ImmutableAirlock, Proceed
 
     /**
      *
-     * @param airlock_ Address of the Airlock contract
+     * @param registry_ Address of the market registry (`Initializer`)
      * @param poolManager_ Address of the Uniswap V4 Pool Manager contract
      * @param positionManager_ Address of the Uniswap V4 Position Manager contract
      * @param locker_ Address of the Streamable Fees Locker contract
      * @param migratorHook_ Address of the Uniswap V4 Migrator Hook contract
      */
     constructor(
-        address airlock_,
+        address registry_,
         IPoolManager poolManager_,
         PositionManager positionManager_,
         StreamableFeesLocker locker_,
         IHooks migratorHook_,
         TopUpDistributor topUpDistributor
-    ) ImmutableAirlock(airlock_) ProceedsSplitter(topUpDistributor) {
+    ) ImmutableRegistry(registry_) ProceedsSplitter(topUpDistributor) {
         poolManager = poolManager_;
         positionManager = positionManager_;
         locker = locker_;
@@ -116,7 +116,7 @@ contract UniswapV4MigratorSplit is ILiquidityMigrator, ImmutableAirlock, Proceed
         address asset,
         address numeraire,
         bytes calldata liquidityMigratorData
-    ) external onlyAirlock returns (address) {
+    ) external onlyRegistry returns (address) {
         (
             uint24 fee,
             int24 tickSpacing,
@@ -129,7 +129,7 @@ contract UniswapV4MigratorSplit is ILiquidityMigrator, ImmutableAirlock, Proceed
         isTickSpacingValid(tickSpacing);
         LPFeeLibrary.validate(fee);
         storeBeneficiaries(
-            PoolId.wrap(0), beneficiaries, Airlock(airlock).owner(), MIN_PROTOCOL_OWNER_SHARES, storeBeneficiary
+            PoolId.wrap(0), beneficiaries, Ownable(registry).owner(), MIN_PROTOCOL_OWNER_SHARES, storeBeneficiary
         );
 
         PoolKey memory poolKey = PoolKey({
@@ -160,7 +160,7 @@ contract UniswapV4MigratorSplit is ILiquidityMigrator, ImmutableAirlock, Proceed
         address token0,
         address token1,
         address recipient
-    ) external payable onlyAirlock returns (uint256 liquidity) {
+    ) external payable onlyRegistry returns (uint256 liquidity) {
         AssetData memory assetData = getAssetData[token0][token1];
         PoolKey memory poolKey = assetData.poolKey;
 
@@ -327,8 +327,8 @@ contract UniswapV4MigratorSplit is ILiquidityMigrator, ImmutableAirlock, Proceed
             );
         }
 
-        // Transfer any remaining dust, either to the governance or the Airlock owner
-        address dustRecipient = isNoOpGovernance ? airlock.owner() : recipient;
+        // Transfer any remaining dust, either to the governance or the registry owner
+        address dustRecipient = isNoOpGovernance ? Ownable(registry).owner() : recipient;
         if (poolKey.currency0.balanceOfSelf() > 0) {
             poolKey.currency0.transfer(dustRecipient, poolKey.currency0.balanceOfSelf());
         }

@@ -7,7 +7,7 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 /// @title HighPotential Address Provider
 /// @notice Dynamic registry: each logical slot is a `bytes32` key; string names use `keccak256(bytes(name))`.
 /// @dev Enumeration tracks keys with a non-zero address. Mutations are role-gated; `version` increments per mutation.
-contract AddressBook is AccessControl {
+contract AddressProvider is AccessControl {
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
     // --------------------------------------------
