@@ -198,7 +198,12 @@ contract Airlock is Ownable {
         AssetData memory assetData = getAssetData[asset];
 
         DERC20(asset).unlockPool();
-        Ownable(asset).transferOwnership(assetData.timelock);
+        // Ownable tokens (e.g. DERC20): transfer control to timelock. Tokens without Ownable (e.g. HP20) skip.
+        try Ownable(asset).owner() returns (address tokenOwner) {
+            if (tokenOwner == address(this)) {
+                Ownable(asset).transferOwnership(assetData.timelock);
+            }
+        } catch { /* no Ownable on asset */ }
 
         (
             uint160 sqrtPriceX96,
