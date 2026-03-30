@@ -10,11 +10,11 @@ import { IHooks, IPoolManager, PoolKey } from "@v4-core/PoolManager.sol";
 import { LPFeeLibrary } from "@v4-core/libraries/LPFeeLibrary.sol";
 import { TickMath } from "@v4-core/libraries/TickMath.sol";
 import { Currency, CurrencyLibrary } from "@v4-core/types/Currency.sol";
-import { IGovernanceFactory } from "@base/interfaces/IGovernanceFactory.sol";
-import { ILiquidityMigrator } from "@base/interfaces/ILiquidityMigrator.sol";
+import { PositionManager } from "@v4-periphery/PositionManager.sol";
 import { IPoolInitializer } from "@base/interfaces/IPoolInitializer.sol";
 import { ITokenFactory } from "@base/interfaces/ITokenFactory.sol";
 import { DERC20 } from "@markets/doppler/DERC20.sol";
+import { ITopUpDistributor, Migrator } from "@markets/Migrator.sol";
 
 enum ModuleState {
     NotWhitelisted,
@@ -24,62 +24,41 @@ enum ModuleState {
     LiquidityMigrator
 }
 
-/// @notice Thrown when the module state is not the expected one
 error WrongModuleState(address module, ModuleState expected, ModuleState actual);
-
-/// @notice Thrown when the lengths of two arrays do not match
 error ArrayLengthsMismatch();
-
-/// @notice Thrown when `CreateParams.poolInitializer` is not this registry
 error PoolInitializerMustBeRegistry(address provided);
 
 struct AssetData {
-    address numeraire; // standardize 
-    address timelock; // delete
-    address governance; // delete
-    ILiquidityMigrator liquidityMigrator; // standardize to AddressProvider
-    IPoolInitializer poolInitializer; // standardize to AddressProvider
-    address pool; // change to PoolKey
-    address migrationPool; // change to PoolKey
-    uint256 numTokensToSell; // standardize
-    uint256 totalSupply; // standardize
-    address integrator; // standardize to AddressProvider (HPTreasury Multisig)
+    address numeraire;
+    IPoolInitializer poolInitializer;
+    address pool;
+    address migrationPool;
+    uint256 numTokensToSell;
+    uint256 totalSupply;
+    address integrator;
 }
 
 struct CreateParams {
-    uint256 initialSupply; // standardize
-    uint256 numTokensToSell; // standardize
-    address numeraire; // standardize
-    ITokenFactory tokenFactory; // standardize in AddressProvider
-    bytes tokenFactoryData; // modify
-    IGovernanceFactory governanceFactory; // delete
-    bytes governanceFactoryData; // delete
-    IPoolInitializer poolInitializer; // standardize in AddressProvider
-    bytes poolInitializerData; // standardize
-    ILiquidityMigrator liquidityMigrator; // standardize in AddressProvider
-    bytes liquidityMigratorData; // standardize
-    address integrator; // standardize in AddressProvider (HPTreasury Multisig)
-    bytes32 salt; // can regenerate locally
+    uint256 initialSupply;
+    uint256 numTokensToSell;
+    address numeraire;
+    ITokenFactory tokenFactory;
+    bytes tokenFactoryData;
+    IPoolInitializer poolInitializer;
+    bytes poolInitializerData;
+    bytes liquidityMigratorData;
+    address integrator;
+    bytes32 salt;
 }
 
-/// @notice Emitted when a new asset token is created via the registry
 event AssetLaunched(address asset, address indexed numeraire, address poolOrHook);
-
-/// @notice Emitted when an asset token is migrated
 event Migrate(address indexed asset, address indexed pool);
-
-/// @notice Emitted when the state of a module is set
 event SetModuleState(address indexed module, ModuleState indexed state);
-
-/// @notice Emitted when fees are collected
 event Collect(address indexed to, address indexed token, uint256 amount);
 
 error InvalidTokenOrder();
-
-/// @notice Only the registry contract may call (used for `IPoolInitializer` surface)
 error SenderNotSelf();
 
-/// @title Initializer | HighPotential — market registry and Uniswap V4 + Doppler pool bootstrap
 contract DopplerDeployer {
     IPoolManager public poolManager;
 
@@ -123,38 +102,49 @@ contract DopplerDeployer {
     }
 }
 
-contract Initializer is Ownable, IPoolInitializer {
+contract Initializer is Ownable, IPoolInitializer, Migrator {
     using CurrencyLibrary for Currency;
     using SoladySafeTransferLib for address;
     using SafeTransferLib for ERC20;
 
-    IPoolManager public immutable poolManager;
     DopplerDeployer public immutable deployer;
 
-    mapping(address module => ModuleState state) public getModuleState; // keep or call AddressProvider?
-    mapping(address asset => AssetData data) public getAssetData; // keep
+    mapping(address module => ModuleState state) public getModuleState;
+    mapping(address asset => AssetData data) public getAssetData;
     mapping(address token => uint256 amount) public getProtocolFees;
-    mapping(address integrator => mapping(address token => uint256 amount)) public getIntegratorFees;
+    mapping(address integratorAccount => mapping(address token => uint256 amount)) public getIntegratorFees;
 
     modifier onlySelf() {
         require(msg.sender == address(this), SenderNotSelf());
         _;
     }
 
-    constructor(address owner_, IPoolManager poolManager_, DopplerDeployer deployer_) Ownable(owner_) {
-        poolManager = poolManager_;
+    constructor(
+        address owner_,
+        IPoolManager poolManager_,
+        DopplerDeployer deployer_,
+        PositionManager positionManager,
+        address locker_,
+        IHooks migratorHook_,
+        ITopUpDistributor topUpDistributor_
+    )
+        Ownable(owner_)
+        Migrator(poolManager_, positionManager, locker_, migratorHook_, topUpDistributor_)
+    {
         deployer = deployer_;
+    }
+
+    function _protocolOwner() internal view override returns (address) {
+        return owner();
     }
 
     receive() external payable { }
 
     function create(CreateParams calldata createData)
         external
-        returns (address asset, address pool, address governance, address timelock, address migrationPool)
+        returns (address asset, address pool, address migrationPool)
     {
         _validateModuleState(address(createData.tokenFactory), ModuleState.TokenFactory);
-        _validateModuleState(address(createData.governanceFactory), ModuleState.GovernanceFactory);
-        _validateModuleState(address(createData.liquidityMigrator), ModuleState.LiquidityMigrator);
         if (address(createData.poolInitializer) != address(this)) {
             revert PoolInitializerMustBeRegistry(address(createData.poolInitializer));
         }
@@ -165,28 +155,23 @@ contract Initializer is Ownable, IPoolInitializer {
                 createData.initialSupply, address(this), address(this), createData.salt, createData.tokenFactoryData
             );
 
-        (governance, timelock) = createData.governanceFactory.create(asset, createData.governanceFactoryData); // delete
-
         ERC20(asset).approve(address(this), createData.numTokensToSell);
         pool = _initializeV4Pool(
             asset, createData.numeraire, createData.numTokensToSell, createData.salt, createData.poolInitializerData
         );
 
-        migrationPool =
-            createData.liquidityMigrator.initialize(asset, createData.numeraire, createData.liquidityMigratorData);
+        _configureV4Migration(asset, createData.numeraire, createData.liquidityMigratorData);
+        migrationPool = address(0);
         DERC20(asset).lockPool(migrationPool);
 
         uint256 excessAsset = ERC20(asset).balanceOf(address(this));
 
         if (excessAsset > 0) {
-            ERC20(asset).safeTransfer(timelock, excessAsset);
+            ERC20(asset).safeTransfer(owner(), excessAsset);
         }
 
         getAssetData[asset] = AssetData({
             numeraire: createData.numeraire,
-            timelock: timelock,
-            governance: governance,
-            liquidityMigrator: createData.liquidityMigrator,
             poolInitializer: IPoolInitializer(address(this)),
             pool: pool,
             migrationPool: migrationPool,
@@ -202,11 +187,6 @@ contract Initializer is Ownable, IPoolInitializer {
         AssetData memory assetData = getAssetData[asset];
 
         DERC20(asset).unlockPool();
-        try Ownable(asset).owner() returns (address tokenOwner) {
-            if (tokenOwner == address(this)) {
-                Ownable(asset).transferOwnership(assetData.timelock);
-            }
-        } catch { }
 
         (
             uint160 sqrtPriceX96,
@@ -221,17 +201,7 @@ contract Initializer is Ownable, IPoolInitializer {
         _handleFees(token0, assetData.integrator, balance0, fees0);
         _handleFees(token1, assetData.integrator, balance1, fees1);
 
-        address liquidityMigrator = address(assetData.liquidityMigrator);
-
-        if (token0 == address(0)) {
-            SafeTransferLib.safeTransferETH(liquidityMigrator, balance0 - fees0);
-        } else {
-            ERC20(token0).safeTransfer(liquidityMigrator, balance0 - fees0);
-        }
-
-        ERC20(token1).safeTransfer(liquidityMigrator, balance1 - fees1);
-
-        assetData.liquidityMigrator.migrate(sqrtPriceX96, token0, token1, assetData.timelock);
+        _migrate(sqrtPriceX96, token0, token1, owner());
 
         emit Migrate(asset, assetData.migrationPool);
     }
@@ -273,7 +243,6 @@ contract Initializer is Ownable, IPoolInitializer {
         emit Collect(to, token, amount);
     }
 
-    /// @inheritdoc IPoolInitializer
     function initialize(
         address asset,
         address numeraire,
@@ -284,7 +253,6 @@ contract Initializer is Ownable, IPoolInitializer {
         return _initializeV4Pool(asset, numeraire, numTokensToSell, salt, data);
     }
 
-    /// @inheritdoc IPoolInitializer
     function exitLiquidity(address hook)
         external
         onlySelf
@@ -351,7 +319,7 @@ contract Initializer is Ownable, IPoolInitializer {
             Doppler(payable(hook)).migrate(address(this));
     }
 
-    function _handleFees(address token, address integrator, uint256 balance, uint256 fees) internal {
+    function _handleFees(address token, address integrator_, uint256 balance, uint256 fees) internal {
         if (fees > 0) {
             uint256 protocolLpFees = fees / 20;
             uint256 protocolProceedsFees = (balance - fees) / 1000;
@@ -364,7 +332,7 @@ contract Initializer is Ownable, IPoolInitializer {
                 : (fees - protocolFees, protocolFees);
 
             getProtocolFees[token] += protocolFees;
-            getIntegratorFees[integrator][token] += integratorFees;
+            getIntegratorFees[integrator_][token] += integratorFees;
         }
     }
 
