@@ -16,8 +16,7 @@ import { Currency, CurrencyLibrary } from "@v4-core/types/Currency.sol";
 import { Strings } from "@oz/contracts/utils/Strings.sol";
 import { CreateParams, PoolData } from "@core/types/Types.sol";
 import { DopplerConfig as DC } from "@core/libraries/DopplerConfig.sol";
-import { Events } from "@core/libraries/Events.sol";
-import { Errors } from "@core/libraries/Errors.sol";
+import { Events, Errors } from "@core/libraries/EventsAndErrors.sol";
 
 contract Initializer is AccessControl, AddressBook {
     using CurrencyLibrary for Currency;
