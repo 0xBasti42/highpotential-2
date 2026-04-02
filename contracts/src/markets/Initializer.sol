@@ -15,7 +15,7 @@ import { TickMath } from "@v4-core/libraries/TickMath.sol";
 import { Currency, CurrencyLibrary } from "@v4-core/types/Currency.sol";
 import { Strings } from "@oz/contracts/utils/Strings.sol";
 import { CreateParams, PoolData } from "@core/types/Types.sol";
-import { DopplerConfig } from "@core/libraries/DopplerConfig.sol";
+import { DopplerConfig as DC } from "@core/libraries/DopplerConfig.sol";
 import { Events } from "@core/libraries/Events.sol";
 import { Errors } from "@core/libraries/Errors.sol";
 
@@ -89,28 +89,28 @@ contract Initializer is AccessControl, AddressBook {
         address tokenFactory = _getAddress(_addressKey("TOKEN_FACTORY"));
         _validateModuleState(tokenFactory, ModuleState.TokenFactory);
         
-        (asset_, salt_) = ITokenFactory(tokenFactory).create(DopplerConfig.TOTAL_SUPPLY, createData);
+        (asset_, salt_) = ITokenFactory(tokenFactory).create(createData);
     }
 
     function _deployDoppler(address asset, bytes32 salt) internal returns (address dopplerHook_, PoolKey memory poolKey_) {
         address dopplerFactory = _getAddress(_addressKey("DOPPLER_FACTORY"));
         _validateModuleState(dopplerFactory, ModuleState.DopplerFactory);
 
-        address dopplerHook_ = IDopplerFactory(dopplerFactory).deploy(DopplerConfig.NUM_TOKENS_TO_SELL, salt);
+        address dopplerHook_ = IDopplerFactory(dopplerFactory).deploy(salt);
 
         bool isToken0 = asset < NUMERAIRE;
         PoolKey memory poolKey_ = PoolKey({
-            currency0: isToken0 ? Currency.wrap(asset) : Currency.wrap(DopplerConfig.NUMERAIRE),
-            currency1: isToken0 ? Currency.wrap(DopplerConfig.NUMERAIRE) : Currency.wrap(asset),
+            currency0: isToken0 ? Currency.wrap(asset) : Currency.wrap(DC.NUMERAIRE),
+            currency1: isToken0 ? Currency.wrap(DC.NUMERAIRE) : Currency.wrap(asset),
             hooks: IHooks(dopplerHook_),
             fee: LPFeeLibrary.DYNAMIC_FEE_FLAG,
-            tickSpacing: DopplerConfig.TICK_SPACING
+            tickSpacing: DC.TICK_SPACING
         });
 
-        ERC20(asset).safeTransfer(dopplerHook_, DopplerConfig.NUM_TOKENS_TO_SELL); // is this all we need to do to initialize the pool?
+        ERC20(asset).safeTransfer(dopplerHook_, DC.NUM_TOKENS_TO_SELL); // is this all we need to do to initialize the pool?
 
         address poolManager = _getAddress(_addressKey("POOL_MANAGER"));
-        IPoolManager(poolManager).initialize(poolKey_, TickMath.getSqrtPriceAtTick(DopplerConfig.STARTING_TICK));
+        IPoolManager(poolManager).initialize(poolKey_, TickMath.getSqrtPriceAtTick(DC.STARTING_TICK));
 
         return (dopplerHook_, poolKey_);
     }
@@ -119,7 +119,7 @@ contract Initializer is AccessControl, AddressBook {
         address migrator = _getAddress(_addressKey("MIGRATOR"));
         _validateModuleState(migrator, ModuleState.Migrator);
 
-        address migrationPool = migrator.initialize(asset, DopplerConfig.NUMERAIRE); // needs to be recreated in migrator
+        address migrationPool = migrator.initialize(asset, DC.NUMERAIRE); // needs to be recreated in migrator
 
         return migrationPool;
     }
