@@ -5,7 +5,7 @@ import { AccessControl } from "@core/AccessControl.sol";
 import { AddressBook } from "@core/AddressBook.sol";
 import { HP20 } from "@markets/tokens/HP20.sol";
 import { CreateParams } from "@core/types/Types.sol";
-import { Errors } from "@core/libraries/Errors.sol";
+import { Errors } from "@core/libraries/EventsAndErrors.sol";
 import { DopplerConfig as DC } from "@core/libraries/DopplerConfig.sol";
 
 contract TokenFactory is AccessControl, AddressBook {
