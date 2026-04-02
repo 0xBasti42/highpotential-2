@@ -10,6 +10,9 @@ forge-std/=lib/forge-std/src/
 @solmate/=lib/v4-core/lib/solmate/src/
 @solady/=lib/solady/src/
 @prb-math/=lib/prb-math/src/
+@account-abstraction/=lib/account-abstraction/contracts/
+@webauthn-sol/=lib/webauthn-sol/src/
+@FreshCryptoLib/=lib/webauthn-sol/lib/FreshCryptoLib/solidity/src/
 
 @base/=src/base/
 @funding/=src/funding/

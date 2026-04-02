@@ -1,4 +1,10 @@
 {
+  "lib/account-abstraction": {
+    "tag": {
+      "name": "v0.9.0",
+      "rev": "b36a1ed52ae00da6f8a4c8d50181e2877e4fa410"
+    }
+  },
   "lib/chainlink-evm": {
     "tag": {
       "name": "v0.3.3",
@@ -49,5 +55,11 @@
   },
   "lib/v4-periphery": {
     "rev": "686f621d9b675fc78bf02781f59ec1ad36921706"
+  },
+  "lib/webauthn-sol": {
+    "tag": {
+      "name": "v1.0.0",
+      "rev": "619f20ab0f074fef41066ee4ab24849a913263b2"
+    }
   }
 }
