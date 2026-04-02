@@ -39,7 +39,9 @@ struct TokenSet {
 }
 
 struct Asset {
+    uint256 assetId;
     address token;
+    TokenData tokenData;
     PoolData poolData;
     address positionTracker;
     address lpStore;
