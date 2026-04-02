@@ -5,6 +5,8 @@ import { ERC20 } from "@oz/contracts/token/ERC20/ERC20.sol";
 import { ERC20Permit } from "@oz/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { PoolKey } from "@v4-core/types/PoolKey.sol";
 import { IAddressProvider } from "@base/interfaces/IAddressProvider.sol";
+import { Share } from "@markets/types/Types.sol";
+import { AvgPosition, Coefficients } from "@markets/types/PPMTypes.sol";
 
 /**
  * @title HP20 | HighPotential
@@ -14,26 +16,36 @@ import { IAddressProvider } from "@base/interfaces/IAddressProvider.sol";
  * @custom:experimental DeFi markets covering EPL, NFL, NBA, and more. | Learn more at https://docs.highpotential.io/
  * @custom:security-contact security@islalabs.co
  */
-contract HP20 is ERC20Permit {
-    IAddressProvider public immutable ADDRESS_PROVIDER;
+contract HP20 is ERC20, ERC20Permit {
+    address constant PERMIT_2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
+    address public initializer;
+    address public migrator;
+    address public orchestrator;
 
     // --------------------------------------------
     //  Metadata
     // --------------------------------------------
 
-    /// @notice Location of ERC20 metadata JSON (HTTPS / IPFS, etc.). Query on-chain via `tokenURI()`; off-chain via the same ABI read.
+    string public name;
+    string public symbol;
     string public tokenURI;
-
-    /// @notice Optional commitment to canonical JSON (e.g. keccak256 of UTF-8 bytes). Zero if unused.
     bytes32 public metadataHash;
 
+    PoolKey public activePoolKey;
+
+    bool public isPoolUnlocked;
+
     // --------------------------------------------
-    //  Configuration
+    //  Storage
     // --------------------------------------------
 
-    /// @notice Current v4 pool identity (LBP hook key, then full AMM key after {syncActivePoolKey}).
-    PoolKey public activePoolKey;
-    bool public isPoolUnlocked;
+    struct PPM {
+        address vault;
+        Coefficients coefficients;
+        uint256 prevTotal;
+        uint256 latestTotal;
+    }
 
     // --------------------------------------------
     //  Events and Errors
@@ -54,18 +66,8 @@ contract HP20 is ERC20Permit {
     //  Access Control
     // --------------------------------------------
 
-    modifier onlyInitializer() {
-        if (msg.sender != IAddressProvider(ADDRESS_PROVIDER).getByName("INITIALIZER")) revert Unauthorized();
-        _;
-    }
-
-    modifier onlyMigrator() {
-        if (msg.sender != IAddressProvider(ADDRESS_PROVIDER).getByName("MIGRATOR")) revert Unauthorized();
-        _;
-    }
-
-    modifier onlyOrchestrator() {
-        if (msg.sender != IAddressProvider(ADDRESS_PROVIDER).getByName("ORCHESTRATOR")) revert Unauthorized();
+    modifier onlyAdmin() {
+        if (msg.sender != initializer || msg.sender != migrator || msg.sender != orchestrator) revert Unauthorized();
         _;
     }
 
@@ -76,69 +78,28 @@ contract HP20 is ERC20Permit {
     constructor(
         string memory name_,
         string memory symbol_,
+        string memory tokenURI_,
+        bytes32 metadataHash_,
         uint256 initialSupply,
         address recipient,
-        address beneficiary,
-        uint256 beneficiaryAmount,
-        address addressProvider_,
-        string memory tokenURI_,
-        bytes32 metadataHash_
+        address addressProvider_
     ) ERC20(name_, symbol_) ERC20Permit(name_) {
         if (addressProvider_ == address(0)) revert NoAddressBook();
+        IAddressProvider addressProvider = IAddressProvider(address(addressProvider_));
 
-        ADDRESS_PROVIDER = IAddressProvider(address(addressProvider_));
         tokenURI = tokenURI_;
         metadataHash = metadataHash_;
 
-        if (beneficiaryAmount > initialSupply) revert InvalidAllocation();
+        initializer = addressProvider.getAddress("INITIALIZER");
+        migrator = addressProvider.getAddress("MIGRATOR");
+        orchestrator = addressProvider.getAddress("ORCHESTRATOR");
+        permit2 = addressProvider.getAddress("PERMIT_2");
 
-        if (beneficiaryAmount != 0) {
-            if (beneficiary == address(0)) revert InvalidBeneficiary();
-            _mint(beneficiary, beneficiaryAmount);
-        }
-
-        _mint(recipient, initialSupply - beneficiaryAmount);
+        _mint(recipient, initialSupply);
     }
 
     // --------------------------------------------
-    //  Metadata (updates)
-    // --------------------------------------------
-
-    function setTokenURI(string calldata newURI) external onlyOrchestrator {
-        tokenURI = newURI;
-        emit TokenURIUpdated(newURI);
-    }
-
-    function setMetadataHash(bytes32 newHash) external onlyOrchestrator {
-        metadataHash = newHash;
-        emit MetadataHashUpdated(newHash);
-    }
-
-    // --------------------------------------------
-    //  Pool Management
-    // --------------------------------------------
-
-    /// @notice Record the LBP / sale `PoolKey` and block ERC20 transfers into the hook until {unlockPool}.
-    function lockActivePoolKey(PoolKey calldata key) external onlyInitializer {
-        activePoolKey = key;
-        isPoolUnlocked = false;
-        emit ActivePoolKeySet(key, true);
-    }
-
-    function unlockPool() external onlyMigrator {
-        isPoolUnlocked = true;
-        emit ActivePoolKeySet(activePoolKey, false);
-    }
-
-    /// @notice Update `activePoolKey` after migration (requires pool unlocked; call after {unlockPool} in migrate flow).
-    function syncActivePoolKey(PoolKey calldata key) external onlyMigrator {
-        if (!isPoolUnlocked) revert PoolMustBeUnlocked();
-        activePoolKey = key;
-        emit ActivePoolKeySet(key, false);
-    }
-
-    // --------------------------------------------
-    //  Asset Management
+    //  ERC20 Extensions
     // --------------------------------------------
 
     function allowance(address owner, address spender) public view override returns (uint256) {
@@ -154,5 +115,42 @@ contract HP20 is ERC20Permit {
 
     function burn(uint256 amount) external {
         _burn(msg.sender, amount);
+    }
+
+    // --------------------------------------------
+    //  Update Metadata
+    // --------------------------------------------
+
+    function setTokenURI(string calldata newURI) external onlyAdmin {
+        tokenURI = newURI;
+        emit TokenURIUpdated(newURI);
+    }
+
+    function setMetadataHash(bytes32 newHash) external onlyAdmin {
+        metadataHash = newHash;
+        emit MetadataHashUpdated(newHash);
+    }
+
+    // --------------------------------------------
+    //  Pool Management
+    // --------------------------------------------
+
+    /// @notice Record the LBP / sale `PoolKey` and block ERC20 transfers into the hook until {unlockPool}.
+    function lockActivePoolKey(PoolKey calldata key) external onlyAdmin {
+        activePoolKey = key;
+        isPoolUnlocked = false;
+        emit ActivePoolKeySet(key, true);
+    }
+
+    function unlockPool() external onlyAdmin {
+        isPoolUnlocked = true;
+        emit ActivePoolKeySet(activePoolKey, false);
+    }
+
+    /// @notice Update `activePoolKey` after migration (requires pool unlocked; call after {unlockPool} in migrate flow).
+    function syncActivePoolKey(PoolKey calldata key) external onlyAdmin {
+        if (!isPoolUnlocked) revert PoolMustBeUnlocked();
+        activePoolKey = key;
+        emit ActivePoolKeySet(key, false);
     }
 }
