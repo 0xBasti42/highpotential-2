@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.34;
 
-import { ModuleState } from "@markets/Initializer.sol";
-import { PoolData } from "@core/types/Types.sol";
+import { ModuleState } from "@core/types/InitializerTypes.sol";
+import { PoolData } from "@core/types/AssetTypes.sol";
 
 library Events {
     event Create(address indexed asset, PoolData poolData);
@@ -15,4 +15,5 @@ library Errors {
     error ArrayLengthsMismatch();
     error OracleNotConfigured();
     error EmptySource();
+    error MatchweekNotLive();
 }

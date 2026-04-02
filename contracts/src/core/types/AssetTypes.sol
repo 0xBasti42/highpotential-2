@@ -52,5 +52,5 @@ struct PoolData {
     address numeraire;
     PoolKey activePool;
     address hookDoppler;
-    uint256 hookMigrator;
+    address hookMigrator;
 }

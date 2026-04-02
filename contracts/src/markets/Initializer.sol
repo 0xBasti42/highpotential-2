@@ -3,18 +3,17 @@ pragma solidity ^0.8.34;
 
 import { AccessControl } from "@core/AccessControl.sol";
 import { AddressBook } from "@core/AddressBook.sol";
-import { HP20 } from "@markets/tokens/HP20.sol";
+import { IHP20 } from "@markets/tokens/interfaces/IHP20.sol";
 import { ITokenFactory } from "@core/interfaces/ITokenFactory.sol";
 import { IDopplerFactory } from "@core/interfaces/IDopplerFactory.sol";
-import { DopplerHook } from "@markets/hooks/DopplerHook.sol";
 import { IHooks, IPoolManager, PoolKey } from "@v4-core/PoolManager.sol";
 import { ERC20, SafeTransferLib } from "@solmate/utils/SafeTransferLib.sol";
 import { SafeTransferLib as SoladySafeTransferLib } from "@solady/utils/SafeTransferLib.sol";
 import { LPFeeLibrary } from "@v4-core/libraries/LPFeeLibrary.sol";
 import { TickMath } from "@v4-core/libraries/TickMath.sol";
 import { Currency, CurrencyLibrary } from "@v4-core/types/Currency.sol";
-import { Strings } from "@oz/contracts/utils/Strings.sol";
-import { CreateParams, PoolData } from "@core/types/Types.sol";
+import { CreateParams, PoolData } from "@core/types/AssetTypes.sol";
+import { ILiquidityMigrator } from "@core/interfaces/ILiquidityMigrator.sol";
 import { DopplerConfig as DC } from "@core/libraries/DopplerConfig.sol";
 import { Events, Errors } from "@core/libraries/EventsAndErrors.sol";
 
@@ -31,6 +30,7 @@ contract Initializer is AccessControl, AddressBook {
 
     enum ModuleState {
         NotWhitelisted,
+        Initializer,
         TokenFactory,
         DopplerFactory,
         Migrator
@@ -44,47 +44,49 @@ contract Initializer is AccessControl, AddressBook {
     //  Interface
     // --------------------------------------------
 
-    function launchPools(
-        CreateParams calldata createData
-    ) external onlyOrchestrator returns (
-        address asset, 
-        PoolData memory poolData, 
-        uint256 excessAsset
-    ) {
-        (asset, salt) = _deployToken(createData);
-        
-        (dopplerHook, poolKey) = _deployDoppler(asset, salt);
+    function launchPools(CreateParams calldata createData) 
+        external 
+        onlyOrchestrator 
+        returns (address asset, PoolData memory poolData, uint256 excessAsset) 
+    {
+        (address asset, bytes32 salt) = _deployToken(createData);
+        (address dopplerHook, PoolKey memory poolKey) = _deployDoppler(asset, salt);
 
-        migratorHook = _initializeMigrator(asset);
+        address migratorHook = _initializeMigrator(asset);
 
-        HP20(asset).lockActivePoolKey(poolKey);
-        
+        IHP20(asset).lockActivePoolKey(poolKey);
+
         excessAsset = ERC20(asset).balanceOf(address(this));
         if (excessAsset > 0) {
-            address orchestrator_ = getAddress(_addressKey("ORCHESTRATOR"));
+            address orchestrator_ = _getAddress(_addressKey("ORCHESTRATOR"));
             ERC20(asset).safeTransfer(orchestrator_, excessAsset);
         }
 
         poolData = PoolData({
-            numeraire: NUMERAIRE,
+            numeraire: DC.NUMERAIRE,
             activePool: poolKey,
-            hookDoppler: address(dopplerHook),
-            hookMigrator: address(migratorHook)
+            hookDoppler: dopplerHook,
+            hookMigrator: migratorHook
         });
 
         emit Events.Create(asset, poolData);
         return (asset, poolData, excessAsset);
     }
 
-    function migrateLiquidity(address asset, PoolData memory poolData) external onlyOrchestrator returns (address asset, PoolData memory poolData) {
+    function migrateLiquidity(address asset, PoolData memory poolData)
+        external
+        onlyOrchestrator
+        returns (address, PoolData memory)
+    {
         // TODO: implement
+        return (asset, poolData);
     }
 
     // --------------------------------------------
     //  Initialization
     // --------------------------------------------
 
-    function _deployToken(CreateParams memory createData) internal returns (address asset_, bytes32 salt_) {
+    function _deployToken(CreateParams calldata createData) internal returns (address asset_, bytes32 salt_) {
         address tokenFactory = _getAddress(_addressKey("TOKEN_FACTORY"));
         _validateModuleState(tokenFactory, ModuleState.TokenFactory);
         
@@ -95,10 +97,10 @@ contract Initializer is AccessControl, AddressBook {
         address dopplerFactory = _getAddress(_addressKey("DOPPLER_FACTORY"));
         _validateModuleState(dopplerFactory, ModuleState.DopplerFactory);
 
-        address dopplerHook_ = IDopplerFactory(dopplerFactory).deploy(salt);
+        dopplerHook_ = IDopplerFactory(dopplerFactory).deploy(salt);
 
-        bool isToken0 = asset < NUMERAIRE;
-        PoolKey memory poolKey_ = PoolKey({
+        bool isToken0 = asset < DC.NUMERAIRE;
+        poolKey_ = PoolKey({
             currency0: isToken0 ? Currency.wrap(asset) : Currency.wrap(DC.NUMERAIRE),
             currency1: isToken0 ? Currency.wrap(DC.NUMERAIRE) : Currency.wrap(asset),
             hooks: IHooks(dopplerHook_),
@@ -118,9 +120,9 @@ contract Initializer is AccessControl, AddressBook {
         address migrator = _getAddress(_addressKey("MIGRATOR"));
         _validateModuleState(migrator, ModuleState.Migrator);
 
-        address migrationPool = migrator.initialize(asset, DC.NUMERAIRE); // needs to be recreated in migrator
+        migratorHook_ = ILiquidityMigrator(migrator).initialize(asset, DC.NUMERAIRE, new bytes(0));
 
-        return migrationPool;
+        return migratorHook_;
     }
 
     // --------------------------------------------
@@ -158,7 +160,7 @@ contract Initializer is AccessControl, AddressBook {
         _setModuleStates(modules, states);
     }
 
-    function _setModuleStates(address[] calldata modules, ModuleState[] calldata states) internal pure {
+    function _setModuleStates(address[] memory modules, ModuleState[] memory states) internal {
         uint256 length = modules.length;
         if (length != states.length) revert Errors.ArrayLengthsMismatch();
         for (uint256 i; i < length; ++i) {

@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.34;
 
+struct PPM {
+    address vault;
+    Coefficients coefficients;
+    uint256 prevTotal;
+    uint256 latestTotal;
+}
+
 // --------------------------------------------
 //  Global Coefficients
 // --------------------------------------------
