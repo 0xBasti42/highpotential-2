@@ -6,10 +6,10 @@ import { IPoolManager } from "@v4-core/PoolManager.sol";
 import { DopplerHook } from "@markets/hooks/DopplerHook.sol";
 import { DopplerConfig } from "@markets/libraries/DopplerConfig.sol";
 
-contract DopplerFactory is AddressBook {
-    constructor(address addressProvider_) AddressBook(addressProvider_) { }
+contract DopplerFactory is AccessControl, AddressBook {
+    constructor(address addressProvider_) AccessControl(addressProvider_) AddressBook(addressProvider_) { }
 
-    function deploy(uint256 numTokensToSell, bytes32 salt) external returns (address dopplerHook) {
+    function deploy(uint256 numTokensToSell, bytes32 salt) external onlyPermitted returns (address dopplerHook) {
         DopplerHook dopplerHook = new DopplerHook{ salt: salt }(
             _getAddress(_addressKey("POOL_MANAGER")),
             numTokensToSell,
