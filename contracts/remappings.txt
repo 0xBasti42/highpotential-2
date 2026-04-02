@@ -14,7 +14,7 @@ forge-std/=lib/forge-std/src/
 @webauthn-sol/=lib/webauthn-sol/src/
 @FreshCryptoLib/=lib/webauthn-sol/lib/FreshCryptoLib/solidity/src/
 
-@base/=src/base/
+@core/=src/core/
 @funding/=src/funding/
 @markets/=src/markets/
 @options/=src/options/
