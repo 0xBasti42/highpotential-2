@@ -43,11 +43,25 @@ abstract contract AccessControl {
     //  Main
     // --------------------------------------------
 
-    modifier onlyPermitted() {
-        if (whitelist[msg.sender] == ModuleState.NotWhitelisted) revert CallerNotPermitted();
+    modifier onlyOrchestrator() {
+        if (whitelist[msg.sender] != ModuleState.Orchestrator) revert CallerNotPermitted();
         _;
     }
 
+    modifier onlyInitializer() {
+        if (whitelist[msg.sender] != ModuleState.Initializer) revert CallerNotPermitted();
+        _;
+    }
+
+    modifier onlyMigrator() {
+        if (whitelist[msg.sender] != ModuleState.Migrator) revert CallerNotPermitted();
+        _;
+    }
+
+    modifier onlySunsetter() {
+        if (whitelist[msg.sender] != ModuleState.Sunsetter) revert CallerNotPermitted();
+        _;
+    }
     // --------------------------------------------
     //  Whitelisting
     // --------------------------------------------

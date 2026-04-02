@@ -9,7 +9,7 @@ import { DopplerConfig } from "@markets/libraries/DopplerConfig.sol";
 contract DopplerFactory is AccessControl, AddressBook {
     constructor(address addressProvider_) AccessControl(addressProvider_) AddressBook(addressProvider_) { }
 
-    function deploy(uint256 numTokensToSell, bytes32 salt) external onlyPermitted returns (address dopplerHook) {
+    function deploy(uint256 numTokensToSell, bytes32 salt) external onlyInitializer returns (address dopplerHook) {
         DopplerHook dopplerHook = new DopplerHook{ salt: salt }(
             _getAddress(_addressKey("POOL_MANAGER")),
             numTokensToSell,

@@ -51,7 +51,7 @@ contract Initializer is AccessControl, AddressBook {
 
     function launchPools(
         CreateParams calldata createData
-    ) external onlyPermitted returns (
+    ) external onlyOrchestrator returns (
         address asset, 
         PoolData memory poolData, 
         uint256 excessAsset
@@ -81,7 +81,7 @@ contract Initializer is AccessControl, AddressBook {
         return (asset, poolData, excessAsset);
     }
 
-    function migrateLiquidity(address asset, PoolData memory poolData) external onlyPermitted returns (address asset, PoolData memory poolData) {
+    function migrateLiquidity(address asset, PoolData memory poolData) external onlyOrchestrator returns (address asset, PoolData memory poolData) {
         // TODO: implement
     }
 

@@ -14,7 +14,7 @@ contract TokenFactory is ITokenFactory, AccessControl, AddressBook {
     function create(
         uint256 totalSupply,
         CreateParams calldata createData
-    ) external onlyPermitted returns (address asset, bytes32 salt) {
+    ) external onlyInitializer returns (address asset, bytes32 salt) {
         ( string memory name, string memory symbol, string memory tokenURI, bytes32 metadataHash, bytes32 salt) = abi.decode(
             createData, (string, string, string, bytes32, bytes32)
         );
