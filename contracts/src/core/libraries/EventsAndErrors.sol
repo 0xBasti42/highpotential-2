@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.34;
 
-import { ModuleState } from "@core/types/InitializerTypes.sol";
+import { ModuleState } from "@markets/Initializer.sol";
 import { PoolData } from "@core/types/AssetTypes.sol";
 
 library Events {
@@ -16,4 +16,6 @@ library Errors {
     error OracleNotConfigured();
     error EmptySource();
     error MatchweekNotLive();
+    error RateLimited(uint256 nextAllowed);
+    error ZeroCooldown();
 }
