@@ -15,6 +15,12 @@ struct PositionMinutes {
     uint256 positionMinutes;
 }
 
+struct SeasonPosition {
+    uint16 seasonStart;
+    Position mainPosition;
+    PositionMinutes[] positionMinutes;
+}
+
 struct Player {
     address tokenAddress;                       // token address added during deployment
     uint256 playerId;                           // unique identifier calculated during initial store
@@ -22,7 +28,7 @@ struct Player {
     string shortName;                           // i.lastName // fetched, filtered, updateable
     Club club;                                  // fetched & updateable
     Position position;                          // denominated from most common position
-    PositionMinutes[] positionMinutes;          // tracks minutes played in each position
+    SeasonPosition[] seasonPositions;          // tracks minutes played in each position over course of season
     uint256 birthDate;                          // unix timestamp // used to determine eligibility
     SeasonMinutes[] totalMinutes;               // minutes BTS // used to determine eligibility
     PlayerStatus status;                        // market status

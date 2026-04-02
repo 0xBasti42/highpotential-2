@@ -30,7 +30,13 @@ struct Coefficients {
 // --------------------------------------------
 
 struct GkCoeff {
-    Datapoint mockDatapoint;
+    Datapoint distribution;
+    Datapoint saves;
+    Datapoint sweeps;
+    Datapoint claims;
+    Datapoint penalty_saves;
+    Datapoint error_free;
+    Datapoint conceded;
 }
 
 struct WdeDefCoeff {
@@ -38,7 +44,13 @@ struct WdeDefCoeff {
 }
 
 struct CtrDefCoeff {
-    Datapoint mockDatapoint;
+    Datapoint tackles;
+    Datapoint interceptions;
+    Datapoint aerial_success;
+    Datapoint possessionWon;
+    Datapoint dangerZoneContributions;
+    Datapoint errors;
+    Datapoint conceded;
 }
 
 struct DefMidCoeff {
@@ -58,7 +70,13 @@ struct WdeAttCoeff {
 }
 
 struct CtrAttCoeff {
-    Datapoint mockDatapoint;
+    Datapoint closeShots;
+    Datapoint conversionRate;
+    Datapoint fantasyAssists;
+    Datapoint keyPasses;
+    Datapoint chancesCreated;
+    Datapoint dangerZoneContributions;
+    Datapoint bigMiss;
 }
 
 // --------------------------------------------
@@ -66,7 +84,6 @@ struct CtrAttCoeff {
 // --------------------------------------------
 
 struct Datapoint {
-    string id;
     uint256 prevTotal;
     uint256 latestTotal;
 }
