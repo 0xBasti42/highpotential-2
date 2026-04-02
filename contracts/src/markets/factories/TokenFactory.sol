@@ -2,11 +2,11 @@
 pragma solidity ^0.8.24;
 
 import { ITokenFactory } from "@markets/factories/interfaces/ITokenFactory.sol";
-import { AccessControl } from "@base/AccessControl.sol";
-import { AddressBook } from "@base/AddressBook.sol";
+import { AccessControl } from "@core/AccessControl.sol";
+import { AddressBook } from "@core/AddressBook.sol";
 import { HP20 } from "@markets/tokens/HP20.sol";
-import { CreateParams } from "@markets/types/Types.sol";
-import { Errors } from "@markets/libraries/Errors.sol";
+import { CreateParams } from "@core/types/Types.sol";
+import { Errors } from "@core/libraries/Errors.sol";
 
 contract TokenFactory is ITokenFactory, AccessControl, AddressBook {
     constructor(address addressProvider_) AccessControl(addressProvider_) AddressBook(addressProvider_) { }

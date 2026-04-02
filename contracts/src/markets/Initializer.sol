@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.34;
 
-import { AccessControl } from "@base/AccessControl.sol";
-import { AddressBook } from "@base/AddressBook.sol";
+import { AccessControl } from "@core/AccessControl.sol";
+import { AddressBook } from "@core/AddressBook.sol";
 import { HP20 } from "@markets/tokens/HP20.sol";
 import { ITokenFactory } from "@markets/factories/interfaces/ITokenFactory.sol";
 import { IDopplerFactory } from "@markets/factories/interfaces/IDopplerFactory.sol";
@@ -14,15 +14,11 @@ import { LPFeeLibrary } from "@v4-core/libraries/LPFeeLibrary.sol";
 import { TickMath } from "@v4-core/libraries/TickMath.sol";
 import { Currency, CurrencyLibrary } from "@v4-core/types/Currency.sol";
 import { Strings } from "@oz/contracts/utils/Strings.sol";
-import { CreateParams, PoolData } from "@markets/types/Types.sol";
-import { DopplerConfig } from "@markets/libraries/DopplerConfig.sol";
-import { Events } from "@markets/libraries/Events.sol";
-import { Errors } from "@markets/libraries/Errors.sol";
+import { CreateParams, PoolData } from "@core/types/Types.sol";
+import { DopplerConfig } from "@core/libraries/DopplerConfig.sol";
+import { Events } from "@core/libraries/Events.sol";
+import { Errors } from "@core/libraries/Errors.sol";
 
-/**
- * @title Initializer | HighPotential
- * @dev Player token + bonding pool launch. CREATE2 salt for HP20 is produced by Chainlink Functions (`mineSalt.js`); no calldata salt.
- */
 contract Initializer is AccessControl, AddressBook {
     using CurrencyLibrary for Currency;
     using SoladySafeTransferLib for address;
