@@ -23,7 +23,7 @@ contract Initializer is AccessControl, AddressBook {
     using SafeTransferLib for ERC20;
 
     // --------------------------------------------
-    //  Initialization
+    //  Configuration
     // --------------------------------------------
 
     mapping(address module => ModuleState state) public getModuleState;
@@ -36,8 +36,34 @@ contract Initializer is AccessControl, AddressBook {
         Migrator
     }
 
+    // --------------------------------------------
+    //  Initialization
+    // --------------------------------------------
+
     constructor(address addressProvider_) AccessControl(addressProvider_) AddressBook(addressProvider_) {
         setModuleStates();
+    }
+
+    function setModuleStates() internal {
+        string[] memory names = new string[](3);
+        names[0] = "TOKEN_FACTORY";
+        names[1] = "DOPPLER_FACTORY";
+        names[2] = "MIGRATOR";
+        address[] memory addrs = _getAddresses(_addressKeys(names));
+
+        address[] memory modules = new address[](4);
+        modules[0] = address(this);
+        modules[1] = addrs[0];
+        modules[2] = addrs[1];
+        modules[3] = addrs[2];
+
+        ModuleState[] memory states = new ModuleState[](4);
+        states[0] = ModuleState.Initializer;
+        states[1] = ModuleState.TokenFactory;
+        states[2] = ModuleState.DopplerFactory;
+        states[3] = ModuleState.Migrator;
+
+        _setModuleStates(modules, states);
     }
 
     // --------------------------------------------
@@ -83,7 +109,7 @@ contract Initializer is AccessControl, AddressBook {
     }
 
     // --------------------------------------------
-    //  Initialization
+    //  Deployments
     // --------------------------------------------
 
     function _deployToken(CreateParams calldata createData) internal returns (address asset_, bytes32 salt_) {
@@ -126,7 +152,7 @@ contract Initializer is AccessControl, AddressBook {
     }
 
     // --------------------------------------------
-    //  Migration
+    //  Migrations
     // --------------------------------------------
 
     function _migrateLiquidity(address asset, PoolData memory poolData) internal returns (address asset_, PoolData memory poolData_) {
@@ -135,30 +161,8 @@ contract Initializer is AccessControl, AddressBook {
     }
 
     // --------------------------------------------
-    //  Whitelisting
+    //  Config
     // --------------------------------------------
-    
-    function setModuleStates() internal {
-        string[] memory names = new string[](3);
-        names[0] = "TOKEN_FACTORY";
-        names[1] = "DOPPLER_FACTORY";
-        names[2] = "MIGRATOR";
-        address[] memory addrs = _getAddresses(_addressKeys(names));
-
-        address[] memory modules = new address[](4);
-        modules[0] = address(this);
-        modules[1] = addrs[0];
-        modules[2] = addrs[1];
-        modules[3] = addrs[2];
-
-        ModuleState[] memory states = new ModuleState[](4);
-        states[0] = ModuleState.Initializer;
-        states[1] = ModuleState.TokenFactory;
-        states[2] = ModuleState.DopplerFactory;
-        states[3] = ModuleState.Migrator;
-
-        _setModuleStates(modules, states);
-    }
 
     function _setModuleStates(address[] memory modules, ModuleState[] memory states) internal {
         uint256 length = modules.length;
