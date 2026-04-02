@@ -62,6 +62,7 @@ abstract contract AccessControl {
         if (whitelist[msg.sender] != ModuleState.Sunsetter) revert CallerNotPermitted();
         _;
     }
+    
     // --------------------------------------------
     //  Whitelisting
     // --------------------------------------------
