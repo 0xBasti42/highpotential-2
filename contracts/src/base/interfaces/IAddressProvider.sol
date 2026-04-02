@@ -5,6 +5,9 @@ interface IAddressProvider {
     function version() external view returns (uint256);
     function get(bytes32 key) external view returns (address);
     function getByName(string calldata name) external view returns (address);
+    function getMany(bytes32[] calldata keyList) external view returns (address[] memory addrs);
+    function getManyByName(string[] calldata names) external view returns (address[] memory addrs);
+    function getAddress(string calldata name) external view returns (address);
     function keyCount() external view returns (uint256);
     function keyAt(uint256 index) external view returns (bytes32);
     function keys() external view returns (bytes32[] memory);

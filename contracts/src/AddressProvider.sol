@@ -33,6 +33,7 @@ contract AddressProvider is AccessControl {
     error EmptyName();
     error NameKeyMismatch();
     error AddressAlreadyBound(bytes32 key, address current);
+    error ZeroAddress();
 
     // --------------------------------------------
     //  Initialization
@@ -147,6 +148,31 @@ contract AddressProvider is AccessControl {
         return _addr[keccak256(bytes(name))];
     }
 
+    /// @notice Batch read by key; unset slots return `address(0)` (same semantics as `get`).
+    function getMany(bytes32[] calldata keyList) external view returns (address[] memory addrs) {
+        uint256 len = keyList.length;
+        addrs = new address[](len);
+        for (uint256 i; i < len; ) {
+            addrs[i] = _addr[keyList[i]];
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /// @notice Batch read by registered name; empty `names[i]` reverts with `EmptyName`.
+    function getManyByName(string[] calldata names) external view returns (address[] memory addrs) {
+        uint256 len = names.length;
+        addrs = new address[](len);
+        for (uint256 i; i < len; ) {
+            if (bytes(names[i]).length == 0) revert EmptyName();
+            addrs[i] = _addr[keccak256(bytes(names[i]))];
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
     function label(bytes32 key) external view returns (string memory) {
         return _label[key];
     }
@@ -161,5 +187,22 @@ contract AddressProvider is AccessControl {
 
     function keys() external view returns (bytes32[] memory) {
         return _keys.values();
+    }
+
+    /// @notice `AddressProvider` name key: `keccak256(bytes(name))` (matches `getByName`)
+    function addressKey(string memory name) external pure returns (bytes32 key) {
+        key = _addressKey(name);
+    }
+
+    /// @notice `AddressProvider` name key: `keccak256(bytes(name))` (matches `getByName`)
+    function _addressKey(string memory name) internal pure returns (bytes32 key) {
+        key = keccak256(bytes(name));
+    }
+
+    /// @notice Resolves `address` via `AddressProvider`; reverts if missing or zero
+    function getAddress(string memory name) external view returns (address) {
+        address returnAddress = _addr[_addressKey(name)];
+        if (returnAddress == address(0)) revert ZeroAddress();
+        return returnAddress;
     }
 }
