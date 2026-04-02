@@ -17,8 +17,8 @@ struct PositionMinutes {
 
 struct SeasonPosition {
     uint16 seasonStart;
-    Position mainPosition;
-    PositionMinutes[] positionMinutes;
+    Position mainPosition;                      // most common position played over course of season
+    PositionMinutes[] positionMinutes;          // tracks minutes played in each position over course of season
 }
 
 struct Player {
@@ -27,8 +27,8 @@ struct Player {
     string fullName;                            // firstName lastName // fetched, filtered, updateable
     string shortName;                           // i.lastName // fetched, filtered, updateable
     Club club;                                  // fetched & updateable
-    Position position;                          // denominated from most common position
-    SeasonPosition[] seasonPositions;          // tracks minutes played in each position over course of season
+    Position position;                          // most common position played over course of previous season
+    SeasonPosition[] seasonPositions;           // tracks minutes played in each position over course of season
     uint256 birthDate;                          // unix timestamp // used to determine eligibility
     SeasonMinutes[] totalMinutes;               // minutes BTS // used to determine eligibility
     PlayerStatus status;                        // market status
