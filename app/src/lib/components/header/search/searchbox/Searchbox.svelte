@@ -32,8 +32,8 @@
 	}
 
 	.searchbox:active {
-		background-color: var(--color-surface-elevated);
-		border: 1px solid var(--color-border-strong);
+		opacity: 0.9;
+		border: 1px solid var(--color-border);
 		border-left: none;
 	}
 
