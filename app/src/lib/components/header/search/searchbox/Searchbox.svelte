@@ -2,7 +2,7 @@
 </script>
 
 <div class="searchbox">
-    <p>Player Token, token address, club, position...</p>
+    <p>Search markets, fixtures, clubs, etc.</p>
     <img src="/icons/search.svg" alt="Search" style="width: 15px; height: 15px; cursor: pointer;" />
 </div>
 
@@ -18,5 +18,26 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+		cursor: text;
+		transition: all var(--transition-base);
+	}
+
+	.searchbox:hover {
+		border: 1px solid var(--color-border-strong);
+		border-left: none;
+	}
+
+	.searchbox:hover p {
+		color: var(--color-text);
+	}
+
+	.searchbox:active {
+		background-color: var(--color-surface-elevated);
+		border: 1px solid var(--color-border-strong);
+		border-left: none;
+	}
+
+	.searchbox:active p {
+		color: var(--color-text-muted);
 	}
 </style>

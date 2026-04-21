@@ -101,25 +101,21 @@
 		justify-content: center;
 		margin-left: 0;
 		cursor: pointer;
+		transition: all var(--transition-base);
 	}
 
 	.more-timeframes i {
 		display: block;
 		font-size: 12px;
 		line-height: 1;
-		color: #565656;
+		color: var(--color-text-faded);
 		transition:
 			color var(--transition-base),
 			transform var(--transition-base);
 	}
 
 	.more-timeframes:hover i {
-		color: var(--color-text-muted);
 		transform: rotate(180deg);
-	}
-
-	.more-timeframes:active i {
-		opacity: 0.7;
 	}
 
 	.chart-type-icon {
