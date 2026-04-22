@@ -22,11 +22,47 @@
 	let checkTimer: ReturnType<typeof setTimeout> | undefined;
 	let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
+	let rightEl = $state<HTMLDivElement | undefined>();
+	let canScrollLeft = $state(false);
+	let canScrollRight = $state(false);
+
+	let nameEl = $state<HTMLParagraphElement | undefined>();
+	let nameOverflow = $state(0);
+
 	onMount(() => {
 		return () => {
 			if (checkTimer !== undefined) clearTimeout(checkTimer);
 			if (toastTimer !== undefined) clearTimeout(toastTimer);
 		};
+	});
+
+	function updateScrollState() {
+		if (!rightEl) return;
+		const { scrollLeft, scrollWidth, clientWidth } = rightEl;
+		canScrollLeft = scrollLeft > 0;
+		canScrollRight = scrollLeft + clientWidth < scrollWidth - 1;
+	}
+
+	$effect(() => {
+		if (!browser || !rightEl) return;
+		updateScrollState();
+		const ro = new ResizeObserver(updateScrollState);
+		ro.observe(rightEl);
+		return () => ro.disconnect();
+	});
+
+	$effect(() => {
+		if (!browser || !nameEl) return;
+		const track = nameEl.firstElementChild as HTMLElement | null;
+		const measure = () => {
+			if (!nameEl) return;
+			nameOverflow = Math.max(0, nameEl.scrollWidth - nameEl.clientWidth);
+		};
+		measure();
+		const ro = new ResizeObserver(measure);
+		ro.observe(nameEl);
+		if (track) ro.observe(track);
+		return () => ro.disconnect();
 	});
 
 	async function handleCopy() {
@@ -70,13 +106,20 @@
 	<div class="token-info-left">
 		<img src="/tokens/playerToken.svg" alt="Player Token" class="token-image" />
 		<div class="token-name">
-			<p class="token-name-text">D. Rice</p>
-			<p class="token-club-position">ARS / Midfield</p>
+			<p
+				class="token-name-text"
+				class:token-name-text--scrolling={nameOverflow > 0}
+				style:--marquee-distance="{-nameOverflow}px"
+				bind:this={nameEl}
+			>
+				<span class="token-name-text-track">G. Mamardashvili</span>
+			</p>
+			<p class="token-club-position">LIV / Keeper</p>
 		</div>
+		<div class="divider"></div>
 		<button
 			type="button"
 			class="copy-button"
-			class:copy-button--copied={copyCheckVisible}
 			onclick={handleCopy}
 			onmouseenter={() => (isHovered = true)}
 			onmouseleave={() => (isHovered = false)}
@@ -89,12 +132,12 @@
 			{:else}
 				<span class="copy-button-text-stack">
 					{#if isHovered}
-						<i 
-							class="fa-solid fa-copy copy-button-text" 
+						<i
+							class="fa-solid fa-copy copy-button-text"
 							in:fade={{ duration: 140 }}
 							out:fade={{ duration: 140 }}
-							aria-hidden="true">
-						</i>
+							aria-hidden="true"
+						></i>
 					{:else}
 						<span
 							class="copy-button-text"
@@ -109,19 +152,39 @@
 			{/if}
 		</button>
 	</div>
-	<div class="token-info-right">
-		{#each stats as item}
-			<div class="token-info-right-item">
-				<p class="token-info-right-item-label">{item.label}</p>
-				<p
-					class="token-info-right-item-value"
-					class:token-info-right-item-value--positive={item.positive === true}
-					class:token-info-right-item-value--negative={item.negative === true}
-				>
-					{item.value}
-				</p>
-			</div>
-		{/each}
+	<div class="token-info-right-shell">
+		<div
+			class="token-info-right"
+			bind:this={rightEl}
+			onscroll={updateScrollState}
+		>
+			{#each stats as item}
+				<div class="token-info-right-item">
+					<p class="token-info-right-item-label">{item.label}</p>
+					<p
+						class="token-info-right-item-value"
+						class:token-info-right-item-value--positive={item.positive === true}
+						class:token-info-right-item-value--negative={item.negative === true}
+					>
+						{item.value}
+					</p>
+				</div>
+			{/each}
+		</div>
+		<div
+			class="scroll-edge scroll-edge--left"
+			class:scroll-edge--active={canScrollLeft}
+			aria-hidden="true"
+		>
+			<i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>
+		</div>
+		<div
+			class="scroll-edge scroll-edge--right"
+			class:scroll-edge--active={canScrollRight}
+			aria-hidden="true"
+		>
+			<i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>
+		</div>
 	</div>
 </div>
 
@@ -199,6 +262,7 @@
 		width: fit-content;
 		text-align: left;
 		line-height: 1;
+		margin-right: 10px;
 	}
 
 	.token-image {
@@ -210,11 +274,50 @@
 		border: 1px solid var(--color-border);
 	}
 
-	.token-name-text {
+	.token-name .token-name-text {
 		font-size: 16px; /* make responsive 16/14 */
 		font-weight: 400;
 		letter-spacing: 1px;
+		line-height: 1.2;
 		color: var(--color-text);
+		width: 120px;
+		overflow: hidden;
+		white-space: nowrap;
+	}
+
+	.token-name-text-track {
+		display: inline-block;
+	}
+
+	.token-name-text--scrolling .token-name-text-track {
+		animation: token-name-marquee 8s ease-in-out infinite;
+	}
+
+	.token-name-text--scrolling:hover .token-name-text-track {
+		animation-play-state: paused;
+	}
+
+	@keyframes token-name-marquee {
+		0%,
+		10% {
+			transform: translateX(0);
+		}
+		50%,
+		80% {
+			transform: translateX(var(--marquee-distance, 0));
+		}
+		100% {
+			transform: translateX(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.token-name-text--scrolling .token-name-text-track {
+			animation: none;
+		}
+		.token-name .token-name-text--scrolling {
+			text-overflow: ellipsis;
+		}
 	}
 
 	.token-club-position {
@@ -224,16 +327,21 @@
 		color: var(--color-text-muted);
 	}
 
+	.divider {
+		width: 1px;
+		height: 100%;
+		background-color: var(--color-border);
+		margin-left: 10px;
+	}
+
 	.copy-button {
 		all: unset;
 		box-sizing: border-box;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		margin-left: 10px;
+		margin-left: 5px;
 		cursor: pointer;
-		opacity: 0;
-		transition: opacity var(--transition-base);
 		width: 28px;
 		height: 20px;
 	}
@@ -266,48 +374,76 @@
 		white-space: nowrap;
 	}
 
-	.token-info-left:hover .copy-button {
-		opacity: 1;
-	}
-
-	.token-info-left:hover .copy-button:hover .copy-button-icon {
-		color: var(--color-text-faded);
-	}
-
-	.token-info-left:hover .copy-button:active .copy-button-icon {
+	.copy-button:active .copy-button-icon {
 		opacity: 0.7;
 	}
 
-	.copy-button--copied {
-		opacity: 1;
-	}
-
-	.copy-button--copied .copy-button-icon {
-		color: var(--color-text-faded);
+	.token-info-right-shell {
+		position: relative;
+		flex: 1;
+		min-width: 0;
+		height: 100%;
 	}
 
 	.token-info-right {
+		box-sizing: border-box;
+		width: 100%;
 		height: 100%;
-		flex: 1;
-		min-width: 0;
 		display: flex;
 		flex-direction: row;
 		flex-wrap: nowrap;
 		align-items: center;
 		justify-content: flex-start;
 		gap: 30px;
-		padding: 0 20px;
+		padding: 0 60px 0 20px;
 		overflow-x: auto;
-		-ms-overflow-style: none;
-		scrollbar-width: none;
+	}
+
+	.scroll-edge {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		width: 8px;
+		background: var(--color-surface-muted);
+		opacity: 0;
+		transition: opacity var(--transition-base);
+		pointer-events: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.scroll-edge i {
+		font-size: 8px;
+		color: var(--color-text-faded);
+		transition: color var(--transition-base);
+		pointer-events: none;
+	}
+
+	.scroll-edge--left {
+		left: 0;
+	}
+
+	.scroll-edge--right {
+		right: 0;
+	}
+
+	.scroll-edge--active {
+		opacity: 1;
 	}
 
 	.token-info-right::-webkit-scrollbar {
-		display: none;
+		height: 2px;
 	}
 
-	.token-info-right:last-child {
-		padding-right: 60px;
+	.token-info-right::-webkit-scrollbar-track {
+		background: transparent;
+		border-radius: 0;
+	}
+
+	.token-info-right::-webkit-scrollbar-thumb {
+		background: var(--color-border-strong);
+		border-radius: 1px;
 	}
 
 	.token-info-right-item {

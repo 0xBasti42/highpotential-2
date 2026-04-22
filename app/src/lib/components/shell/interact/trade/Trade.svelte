@@ -45,7 +45,7 @@
 
 	<div class="trade-footer">
 		<button type="button" class="swap-button">
-			Swap
+			Exchange
 		</button>
 		<div class="swap-info">
 			<p class="swap-info-label"></p>

@@ -34,6 +34,10 @@
 		<p>ƒ×</p>
 		<p>Indicators</p>
 	</div>
+
+	<div class="chart-settings-right">
+		<img src="/brand/logo.svg" alt="Watermark" class="chart-settings-right-icon" />
+	</div>
 </div>
 
 <style>
@@ -126,5 +130,19 @@
 	.indicator-container p:first-child {
 		font-size: 16px;
 		color: var(--color-text-muted);
+	}
+
+	.chart-settings-right {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		padding: 0 20px;
+		opacity: 0.3;
+	}
+
+	.chart-settings-right-icon {
+		width: 100px;
+		filter: grayscale(100%);
 	}
 </style>
