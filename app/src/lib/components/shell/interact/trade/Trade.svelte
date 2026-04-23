@@ -30,7 +30,7 @@
 	};
 
 	const TGBP: Token = {
-		image: '/tokens/tgbp.svg',
+		image: '/tokens/tgbp-white.svg',
 		alt: 'tGBP',
 		symbol: 'tGBP'
 	};
