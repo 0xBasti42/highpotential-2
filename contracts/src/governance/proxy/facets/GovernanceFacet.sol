@@ -8,7 +8,7 @@ import { IGovernanceFacet } from "../interfaces/IGovernanceFacet.sol";
 /// @notice Timelock-gated mutators for diamond-level governance state that
 ///         lives outside the cut map: selector pause, freeze switch, and
 ///         selector version metadata. Every external function is callable
-///         only by the diamond's ProxyTimelock.
+///         only by the diamond's VersionedProxyAdmin.
 ///
 ///         Kept separate from DiamondCutFacet so the cut interface stays
 ///         pure EIP-2535 and this facet can be audited in isolation.
@@ -20,7 +20,7 @@ contract GovernanceFacet is IGovernanceFacet {
     // --------------------------------------------
 
     function pauseSelectors(bytes4[] calldata selectors) external override {
-        LibDiamond.enforceIsProxyTimelock();
+        LibDiamond.enforceIsVersionedProxyAdmin();
         uint256 len = selectors.length;
         for (uint256 i; i < len; ) {
             LibDiamond.setSelectorPaused(selectors[i], true);
@@ -29,7 +29,7 @@ contract GovernanceFacet is IGovernanceFacet {
     }
 
     function unpauseSelectors(bytes4[] calldata selectors) external override {
-        LibDiamond.enforceIsProxyTimelock();
+        LibDiamond.enforceIsVersionedProxyAdmin();
         uint256 len = selectors.length;
         for (uint256 i; i < len; ) {
             LibDiamond.setSelectorPaused(selectors[i], false);
@@ -46,7 +46,7 @@ contract GovernanceFacet is IGovernanceFacet {
     ///         pause/unpause and metadata changes remain possible, but no
     ///         new selectors can be added.
     function freeze() external override {
-        LibDiamond.enforceIsProxyTimelock();
+        LibDiamond.enforceIsVersionedProxyAdmin();
         LibDiamond.freezeDiamond();
     }
 
@@ -59,7 +59,7 @@ contract GovernanceFacet is IGovernanceFacet {
         bytes32 family,
         uint32 version
     ) external override {
-        LibDiamond.enforceIsProxyTimelock();
+        LibDiamond.enforceIsVersionedProxyAdmin();
         LibDiamond.setSelectorMeta(selector, family, version);
     }
 
@@ -68,7 +68,7 @@ contract GovernanceFacet is IGovernanceFacet {
         bytes32[] calldata families,
         uint32[] calldata versions
     ) external override {
-        LibDiamond.enforceIsProxyTimelock();
+        LibDiamond.enforceIsVersionedProxyAdmin();
         uint256 len = selectors.length;
         if (families.length != len || versions.length != len) revert ArrayLengthMismatch();
         for (uint256 i; i < len; ) {
@@ -78,7 +78,7 @@ contract GovernanceFacet is IGovernanceFacet {
     }
 
     function setSelectorDeprecated(bytes4 selector, bool deprecated) external override {
-        LibDiamond.enforceIsProxyTimelock();
+        LibDiamond.enforceIsVersionedProxyAdmin();
         LibDiamond.setSelectorDeprecated(selector, deprecated);
     }
 }

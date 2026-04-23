@@ -4,35 +4,65 @@ pragma solidity ^0.8.34;
 /*//////////////////////////////////////////////////////////////
 //                        LibDiamond
 //------------------------------------------------------------
-//  Based on the EIP-2535 reference implementation by Nick Mudge
-//  (<https://github.com/mudgen/diamond-1-hardhat>), with the
+//  Shared storage + cut machinery for the VersionedProxy family.
+//
+//  Architectural intent
+//  --------------------
+//  VersionedProxy is built for trustless, version-controlled
+//  upgradeability: new function versions are layered on top of
+//  old ones rather than replacing them, users can pin to a
+//  specific selector for the lifetime of the proxy, and every
+//  state transition is cryptographically scoped so governance
+//  cannot retroactively rewrite history. This library is where
+//  those invariants live on-chain — they are enforced here at the
+//  storage-access layer, not only at the outer governance surface
+//  (VersionedProxyAdmin), so they hold even if the outer surface
+//  is ever replaced or bypassed.
+//
+//  Relation to the EIP-2535 reference
+//  ----------------------------------
+//  Based on Nick Mudge's diamond-1 reference implementation
+//  (<https://github.com/mudgen/diamond-1-hardhat>) with the
 //  following HighPotential-specific modifications:
 //
 //  1. Append-only cuts: `Replace` and `Remove` actions are rejected
-//     at the library level. Only `Add` is supported. This makes the
-//     invariant on-chain rather than enforced by governance alone.
+//     at the library level. Only `Add` is supported. This makes
+//     "no function ever registered on this proxy can be silently
+//     replaced or removed" an on-chain invariant rather than a
+//     governance policy.
 //
-//  2. ProxyTimelock authority: replaces the `contractOwner` field.
-//     Cuts, pause, and metadata changes are gated on a single
-//     immutable-by-convention authority set once at deployment.
+//  2. VersionedProxyAdmin authority: replaces the `contractOwner`
+//     field. Cuts, pause, and metadata changes are gated on a
+//     single authority that is set once at deployment (via
+//     `setVersionedProxyAdmin`) and subsequently immutable.
 //
 //  3. Selector pause: per-selector boolean flag consulted by the
-//     diamond's fallback. Pausing is retroactive (works for any
-//     registered selector regardless of facet opt-in) and does not
-//     modify the selector routing itself.
+//     proxy's fallback. Pausing is retroactive (works for any
+//     registered selector regardless of facet opt-in) and does
+//     not modify the selector routing itself — paused selectors
+//     stay on file and can be reactivated, they simply revert at
+//     the proxy layer while the pause is in effect.
 //
-//  4. Facet code-hash provenance: the extcodehash of each facet is
-//     recorded at Add time and re-checked on subsequent Adds for the
-//     same address, preventing facet-address reuse with altered code.
+//  4. Facet code-hash provenance: `extcodehash` of each facet is
+//     recorded at Add time and re-checked on subsequent Adds for
+//     the same address, preventing facet-address reuse with
+//     altered code.
 //
-//  5. One-shot init contracts: each `_init` address can be used at
-//     most once, preventing replayed initialisation.
+//  5. One-shot init contracts: each `_init` address can be used
+//     at most once across the proxy's lifetime, preventing
+//     replayed initialisation.
 //
 //  6. Freeze switch: one-way flag that permanently disables cuts,
-//     converting the diamond into an immutable contract system.
+//     converting the proxy into an immutable contract system when
+//     governance decides no further upgrades are required.
 //
-//  7. Selector metadata: optional on-chain (family, version, deprecated)
-//     records to support version-aware clients without ABI-name parsing.
+//  7. Selector metadata: first-class on-chain records of
+//     `(family, version, registeredAt, deprecated)` per selector,
+//     with monotonicity enforcement (`version == latestInFamily
+//     + 1`, first in family == 1, set-at-most-once). Lets
+//     version-aware clients walk the family chain without any
+//     ABI-name parsing and gives the proxy a cryptographic link
+//     between an EIP-2535 selector and its human-readable version.
 //////////////////////////////////////////////////////////////*/
 
 import { IDiamondCut } from "../interfaces/IDiamondCut.sol";
@@ -63,7 +93,7 @@ library LibDiamond {
         mapping(bytes4 interfaceId => bool) supportedInterfaces;
 
         // --- HighPotential governance ---
-        address proxyTimelock;                                 // sole authority for cuts, pause, metadata
+        address versionedProxyAdmin;                                 // sole authority for cuts, pause, metadata
         bool frozen;                                           // one-way: no more cuts once true
         mapping(address facet => bytes32) facetCodeHash;       // provenance pin per facet address
         mapping(bytes4 selector => bool) selectorPaused;       // per-selector routing kill-switch
@@ -82,7 +112,7 @@ library LibDiamond {
     // --------------------------------------------
 
     event DiamondCut(IDiamondCut.FacetCut[] _diamondCut, address _init, bytes _calldata);
-    event ProxyTimelockSet(address indexed timelock);
+    event VersionedProxyAdminSet(address indexed timelock);
     event DiamondFrozen(uint256 timestamp);
     event SelectorPausedSet(bytes4 indexed selector, bool paused);
     event FacetCodeHashRecorded(address indexed facet, bytes32 codeHash);
@@ -93,9 +123,9 @@ library LibDiamond {
     //  Errors
     // --------------------------------------------
 
-    error NotProxyTimelock(address caller);
-    error ProxyTimelockAlreadySet();
-    error ZeroProxyTimelock();
+    error NotVersionedProxyAdmin(address caller);
+    error VersionedProxyAdminAlreadySet();
+    error ZeroVersionedProxyAdmin();
 
     error AppendOnly(IDiamondCut.FacetCutAction action);
     error NoSelectors();
@@ -121,24 +151,24 @@ library LibDiamond {
     error NonInfrastructureSelectorInInit(bytes4 selector);
 
     // --------------------------------------------
-    //  ProxyTimelock authority
+    //  VersionedProxyAdmin authority
     // --------------------------------------------
 
-    function setProxyTimelock(address _timelock) internal {
+    function setVersionedProxyAdmin(address _timelock) internal {
         DiamondStorage storage ds = diamondStorage();
-        if (ds.proxyTimelock != address(0)) revert ProxyTimelockAlreadySet();
-        if (_timelock == address(0)) revert ZeroProxyTimelock();
-        ds.proxyTimelock = _timelock;
-        emit ProxyTimelockSet(_timelock);
+        if (ds.versionedProxyAdmin != address(0)) revert VersionedProxyAdminAlreadySet();
+        if (_timelock == address(0)) revert ZeroVersionedProxyAdmin();
+        ds.versionedProxyAdmin = _timelock;
+        emit VersionedProxyAdminSet(_timelock);
     }
 
-    function proxyTimelock() internal view returns (address) {
-        return diamondStorage().proxyTimelock;
+    function versionedProxyAdmin() internal view returns (address) {
+        return diamondStorage().versionedProxyAdmin;
     }
 
-    function enforceIsProxyTimelock() internal view {
-        if (msg.sender != diamondStorage().proxyTimelock) {
-            revert NotProxyTimelock(msg.sender);
+    function enforceIsVersionedProxyAdmin() internal view {
+        if (msg.sender != diamondStorage().versionedProxyAdmin) {
+            revert NotVersionedProxyAdmin(msg.sender);
         }
     }
 
@@ -277,7 +307,7 @@ library LibDiamond {
     ///           is not revisable).
     ///        2. Versions within a family strictly equal `previous + 1`, with
     ///           the first version in a family being `1`.
-    ///      Both checks are defence in depth. ProxyTimelock pre-validates the
+    ///      Both checks are defence in depth. VersionedProxyAdmin pre-validates the
     ///      same invariants against the loupe before the timelock window
     ///      starts; this library-level enforcement guarantees the invariant
     ///      holds even if the timelock is bypassed in future.

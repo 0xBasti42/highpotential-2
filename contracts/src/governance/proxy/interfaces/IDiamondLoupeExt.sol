@@ -12,7 +12,7 @@ import { LibDiamond } from "../libraries/LibDiamond.sol";
 interface IDiamondLoupeExt {
     /// @notice Authority currently permitted to perform cuts, pause, and
     ///         metadata changes on this diamond.
-    function proxyTimelock() external view returns (address);
+    function versionedProxyAdmin() external view returns (address);
 
     /// @notice Returns true once the diamond has been permanently frozen.
     function isFrozen() external view returns (bool);

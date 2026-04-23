@@ -2,27 +2,49 @@
 pragma solidity ^0.8.34;
 
 /*//////////////////////////////////////////////////////////////
-//                          Diamond
+//                        VersionedProxy
 //------------------------------------------------------------
-//  EIP-2535 diamond proxy. Modifications vs. the Mudge reference:
+//  HighPotential-specific EIP-2535 diamond implementation,
+//  designed for trustless, version-controlled upgradeability.
 //
-//  * `DiamondArgs.owner` is replaced by `DiamondArgs.proxyTimelock`.
-//    The diamond has no owner; the sole authority over cuts, pause
-//    and metadata is a ProxyTimelock contract set once at deployment.
+//  Where a vanilla diamond lets its owner add, replace, or
+//  remove any function at any time, a VersionedProxy admits
+//  ONLY additive upgrades, under a strict naming convention
+//  (`<family>V<version>(...)`), behind a timelocked authority
+//  (VersionedProxyAdmin), with cryptographic provenance on every
+//  facet and optional immediate pausing at the routing layer.
+//
+//  This turns "upgradeable" into "permanently backwards-compatible,
+//  with new versions layered on top" — users who pin to a specific
+//  selector (e.g. deployV1) can rely on that function remaining
+//  callable for the lifetime of the proxy; new versions coexist
+//  alongside old ones rather than replacing them.
+//
+//  Remains compatible with standard diamond tooling (Louper,
+//  Etherscan, diamond-ABI mergers) because the IDiamondCut /
+//  IDiamondLoupe / IERC165 interfaces are preserved unchanged —
+//  only the contract class is renamed to signal the guarantees
+//  listed below.
+//
+//  Modifications vs. the Mudge reference:
+//
+//  * `DiamondArgs.owner` is replaced by `VersionedProxyArgs.versionedProxyAdmin`.
+//    The proxy has no owner; the sole authority over cuts, pause and
+//    metadata is a VersionedProxyAdmin contract set once at deployment.
 //
 //  * The fallback consults `selectorPaused` before routing. A paused
 //    selector reverts at the proxy layer, regardless of whether the
 //    target facet ever implemented a pause modifier.
 //
 //  * IERC173 is intentionally not registered in supportedInterfaces
-//    since the diamond is not owned.
+//    since the proxy is not owned.
 //
 //  * The initial cut (run inside the constructor) is restricted to
 //    the infrastructure selector whitelist — only DiamondCutFacet,
 //    DiamondLoupeFacet (including HP extensions) and GovernanceFacet
 //    selectors can be registered at construction. Business facets
-//    must be added post-deployment via the ProxyTimelock, where the
-//    versioned-naming convention is enforced.
+//    must be added post-deployment via the VersionedProxyAdmin, where
+//    the versioned-naming convention is enforced.
 //////////////////////////////////////////////////////////////*/
 
 import { LibDiamond } from "./libraries/LibDiamond.sol";
@@ -32,13 +54,13 @@ import { IDiamondLoupeExt } from "./interfaces/IDiamondLoupeExt.sol";
 import { IGovernanceFacet } from "./interfaces/IGovernanceFacet.sol";
 import { IERC165 } from "./interfaces/IERC165.sol";
 
-contract Diamond {
-    struct DiamondArgs {
-        address proxyTimelock;
+contract VersionedProxy {
+    struct VersionedProxyArgs {
+        address versionedProxyAdmin;
     }
 
-    constructor(IDiamondCut.FacetCut[] memory _diamondCut, DiamondArgs memory _args) payable {
-        LibDiamond.setProxyTimelock(_args.proxyTimelock);
+    constructor(IDiamondCut.FacetCut[] memory _diamondCut, VersionedProxyArgs memory _args) payable {
+        LibDiamond.setVersionedProxyAdmin(_args.versionedProxyAdmin);
 
         _enforceInfrastructureOnly(_diamondCut);
         LibDiamond.diamondCut(_diamondCut, address(0), new bytes(0));
@@ -49,13 +71,13 @@ contract Diamond {
         ds.supportedInterfaces[type(IDiamondLoupe).interfaceId] = true;
         ds.supportedInterfaces[type(IDiamondLoupeExt).interfaceId] = true;
         ds.supportedInterfaces[type(IGovernanceFacet).interfaceId] = true;
-        // IERC173 is deliberately omitted: this diamond is owner-less.
+        // IERC173 is deliberately omitted: this proxy is owner-less.
     }
 
     /// @dev Iterates every selector in the initial cut and reverts on the
     ///      first one that is not part of the HighPotential infrastructure
     ///      whitelist. All business-logic selectors must be added later
-    ///      through the ProxyTimelock's versioned cut path.
+    ///      through the VersionedProxyAdmin's versioned cut path.
     function _enforceInfrastructureOnly(IDiamondCut.FacetCut[] memory cuts) internal pure {
         uint256 cutsLen = cuts.length;
         for (uint256 i; i < cutsLen; ) {
@@ -90,7 +112,7 @@ contract Diamond {
             // --- IERC165 ---
             || s == IERC165.supportsInterface.selector
             // --- IDiamondLoupeExt (HP extensions) ---
-            || s == IDiamondLoupeExt.proxyTimelock.selector
+            || s == IDiamondLoupeExt.versionedProxyAdmin.selector
             || s == IDiamondLoupeExt.isFrozen.selector
             || s == IDiamondLoupeExt.facetCodeHash.selector
             || s == IDiamondLoupeExt.selectorPaused.selector

@@ -6,7 +6,7 @@ import { LibDiamond } from "../libraries/LibDiamond.sol";
 
 /// @title DiamondCutFacet
 /// @notice Sole entry point for modifying the diamond's selector map. Only
-///         accepts `Add` actions (append-only), gated on the ProxyTimelock
+///         accepts `Add` actions (append-only), gated on the VersionedProxyAdmin
 ///         authority. Reverts if the diamond has been frozen.
 contract DiamondCutFacet is IDiamondCut {
     function diamondCut(
@@ -14,7 +14,7 @@ contract DiamondCutFacet is IDiamondCut {
         address _init,
         bytes calldata _calldata
     ) external override {
-        LibDiamond.enforceIsProxyTimelock();
+        LibDiamond.enforceIsVersionedProxyAdmin();
         LibDiamond.diamondCut(_diamondCut, _init, _calldata);
     }
 }

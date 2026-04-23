@@ -127,8 +127,8 @@ contract DiamondLoupeFacet is IDiamondLoupe, IDiamondLoupeExt, IERC165 {
     //  HighPotential extended introspection
     // --------------------------------------------
 
-    function proxyTimelock() external override view returns (address) {
-        return LibDiamond.proxyTimelock();
+    function versionedProxyAdmin() external override view returns (address) {
+        return LibDiamond.versionedProxyAdmin();
     }
 
     function isFrozen() external override view returns (bool) {

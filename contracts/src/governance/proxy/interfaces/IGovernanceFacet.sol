@@ -3,9 +3,9 @@ pragma solidity ^0.8.34;
 
 /// @title IGovernanceFacet
 /// @notice External surface of the HighPotential-specific GovernanceFacet.
-///         Callable only by the ProxyTimelock registered on the diamond.
+///         Callable only by the VersionedProxyAdmin registered on the diamond.
 ///         Held in a dedicated interface so other contracts (LibDiamond's
-///         infrastructure whitelist, ProxyTimelock's cross-contract calls)
+///         infrastructure whitelist, VersionedProxyAdmin's cross-contract calls)
 ///         can reference its selectors without importing the implementation.
 interface IGovernanceFacet {
     function pauseSelectors(bytes4[] calldata selectors) external;
