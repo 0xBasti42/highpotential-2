@@ -55,7 +55,7 @@
 
 	const sellSide: TradeSideConfig = $derived({
 		side: 'input',
-		label: 'Sell',
+		label: 'From',
 		infoRight: 'Balance: 0.00',
 		tokenImage: tokenIn.image,
 		tokenAlt: tokenIn.alt,
@@ -68,7 +68,7 @@
 
 	const buySide: TradeSideConfig = $derived({
 		side: 'output',
-		label: 'Buy',
+		label: 'To',
 		infoRight: `1 ${tokenOut.symbol} = ${formattedRate} ${tokenIn.symbol}`,
 		tokenImage: tokenOut.image,
 		tokenAlt: tokenOut.alt,
@@ -118,7 +118,7 @@
 				<div class="asset-selector-right">
 					{#each config.percentOptions as pct (pct)}
 						<button type="button" class="asset-selector-right-item">
-							<p class="asset-selector-right-item-label">{pct}%</p>
+							<p class="asset-selector-right-item-label">+{pct}%</p>
 						</button>
 					{/each}
 				</div>
@@ -166,7 +166,9 @@
 		</div>
 		<div class="trade-header-right">
 			<div class="trade-header-right-item">
-				<i class="fa-solid fa-gear settings-icon"></i>
+				<div class="settings-icon-container">
+					<i class="fa-solid fa-gear settings-icon"></i>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -195,7 +197,7 @@
 	</div>
 
 	<div class="trade-footer">
-		<button type="button" class="swap-button">Exchange</button>
+		<button type="button" class="swap-button">Sign in to Trade</button>
 		<div class="swap-info">
 			<p class="swap-info-label"></p>
 		</div>
@@ -215,6 +217,7 @@
 
 	/* ---------- Header ---------- */
 	.trade-header {
+		background-color: var(--color-surface);
 		width: 100%;
 		height: 60px;
 		display: flex;
@@ -257,6 +260,7 @@
 	.one.active,
 	.two.active {
 		border-bottom-color: transparent;
+		background-color: var(--color-surface-elevated);
 	}
 
 	.two.active {
@@ -288,6 +292,26 @@
 		border-bottom: 1px solid var(--color-border);
 	}
 
+	.settings-icon-container {
+		width: 30px;
+		height: 30px;
+		border-radius: 5px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid transparent;
+		cursor: pointer;
+		transition: all var(--transition-base);
+	}
+
+	.settings-icon-container:hover {
+		background-color: #20202090;
+	}
+
+	.settings-icon-container:active {
+		opacity: 0.8;
+	}
+
 	.settings-icon {
 		font-size: 12px;
 		color: var(--color-text-faded);
@@ -295,11 +319,11 @@
 		transition: all var(--transition-base);
 	}
 
-	.settings-icon:hover {
+	.settings-icon-container:hover .settings-icon {
 		color: var(--color-text-muted);
 	}
 
-	.settings-icon:active {
+	.settings-icon-container:active .settings-icon {
 		opacity: 0.8;
 	}
 
@@ -355,12 +379,12 @@
 	}
 
 	.swap-icon:hover {
-		background-color: #202020;
+		background-color: var(--color-surface);
 		color: var(--color-text);
 	}
 
 	.swap-icon:active {
-		background-color: var(--color-surface);
+		background-color: var(--color-surface-muted);
 	}
 
 	.swap-icon-button {
@@ -400,17 +424,17 @@
 		padding: 5px;
 		border: 1px solid var(--color-border);
 		border-radius: 5px;
-		background-color: var(--color-surface-muted);
+		background-color: var(--color-surface-elevated);
 		cursor: pointer;
 		transition: all var(--transition-base);
 	}
 
 	.asset-dropdown:hover {
-		background-color: #252525;
+		background-color: var(--color-surface-muted);
 	}
 
 	.asset-dropdown:active {
-		opacity: 0.8;
+		background-color: var(--color-surface-elevated);
 	}
 
 	.asset-dropdown-left-image {
@@ -449,19 +473,22 @@
 		padding: 0 10px;
 		border: 1px solid var(--color-border);
 		border-radius: 5px;
-		background-color: var(--color-surface-muted);
+		background-color: var(--color-surface-elevated);
 		opacity: 0.7;
 		cursor: pointer;
-		transition: opacity var(--transition-base);
+		transition: all var(--transition-base);
 	}
 
 	.asset-selector-right-item:hover {
 		opacity: 1;
-		background-color: #252525;
+		background-color: var(--color-surface-muted);
+		border-color: var(--color-border-light);
 	}
 
 	.asset-selector-right-item:active {
 		opacity: 0.8;
+		background-color: var(--color-surface-elevated);
+		border-color: var(--color-border);
 	}
 
 	.asset-selector-right-item-label {
@@ -522,9 +549,12 @@
 		font-size: var(--text-sm);
 		font-weight: 400;
 		letter-spacing: 1px;
-		opacity: 0.5;
-		cursor: default;
+		cursor: pointer;
 		transition: all var(--transition-base);
+	}
+
+	.swap-button:active {
+		opacity: 0.8;
 	}
 
 	.swap-info {

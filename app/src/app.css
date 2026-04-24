@@ -25,6 +25,7 @@
 
 	--color-border: #303030;
 	--color-border-strong: #404040;
+	--color-border-light: #30303050;
 
 	--color-success: #198176;
 	--color-warning: oklch(0.75 0.15 85);
@@ -266,10 +267,6 @@ button {
 	cursor: pointer;
 }
 
-button:hover {
-	background: linear-gradient(to left, var(--color-primary-light), var(--color-primary));
-}
-
 button:active {
 	opacity: 0.8;
 }
@@ -284,8 +281,17 @@ button:active {
 	border-radius: var(--radius-pill);
 	transition: opacity var(--transition-base), background-color var(--transition-fast),
 		color var(--transition-fast);
+	opacity: 0.9;
+	cursor: pointer;
 }
 
+.secondaryButton:hover {
+	opacity: 1;
+}
+
+.secondaryButton:active {
+	opacity: 0.8;
+}
 .secondaryButton:hover {
 	background-color: var(--color-border-strong);
 }

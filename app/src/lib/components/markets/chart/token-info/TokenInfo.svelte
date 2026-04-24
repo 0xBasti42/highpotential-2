@@ -10,7 +10,7 @@
 		tokenAddress?: string;
 	}
 
-	let { tokenAddress = '0x224d35Cc6634C0532925a3b844Bc9e7595f0bEb' }: Props = $props();
+	let { tokenAddress = '0x422d35Cc6634C0532925a3b844Bc9e7595f0bEb' }: Props = $props();
 
 	/** Toast visible for this long; check clears earlier so exit animations don’t overlap */
 	const COPY_TOAST_MS = 2000;
@@ -141,7 +141,7 @@
 					{:else}
 						<span
 							class="copy-button-text"
-							style="font-size: 10px; color: var(--color-text-faded);"
+							style="font-size: 10px; color: var(--color-text-muted);"
 							in:fade={{ duration: 140 }}
 							out:fade={{ duration: 140 }}
 						>
@@ -348,7 +348,7 @@
 
 	.copy-button-icon {
 		font-size: 12px;
-		color: var(--color-text-faded);
+		color: var(--color-text-muted);
 		transition: color var(--transition-base);
 		pointer-events: none;
 	}
@@ -368,7 +368,7 @@
 		font-size: 12px;
 		font-weight: 400;
 		letter-spacing: 1px;
-		color: var(--color-text-faded);
+		color: var(--color-text-muted);
 		transition: color var(--transition-base);
 		pointer-events: none;
 		white-space: nowrap;
@@ -387,6 +387,7 @@
 
 	.token-info-right {
 		box-sizing: border-box;
+		background-color: var(--color-surface-elevated);
 		width: 100%;
 		height: 100%;
 		display: flex;
@@ -423,10 +424,12 @@
 
 	.scroll-edge--left {
 		left: 0;
+		border-right: 1px solid var(--color-border-light);
 	}
 
 	.scroll-edge--right {
 		right: 0;
+		border-left: 1px solid var(--color-border-light);
 	}
 
 	.scroll-edge--active {
