@@ -173,35 +173,41 @@
 		</div>
 	</div>
 
-	<div class="trade-body">
-		{@render tradeSide(sellSide)}
+	{#if mode === 'exchange'}
+		<div class="trade-body">
+			{@render tradeSide(sellSide)}
 
-		<div class="input-output-separator">
-			<button
-				type="button"
-				class="swap-icon"
-				aria-label="Swap input and output tokens"
-				onclick={handleSwapTokens}
-			>
-				<img
-					src="/icons/exchange.svg"
-					alt=""
-					aria-hidden="true"
-					class="swap-icon-button"
-					style="transform: rotate({swapIconTurns * 180}deg)"
-				/>
-			</button>
+			<div class="input-output-separator">
+				<button
+					type="button"
+					class="swap-icon"
+					aria-label="Swap input and output tokens"
+					onclick={handleSwapTokens}
+				>
+					<img
+						src="/icons/exchange.svg"
+						alt=""
+						aria-hidden="true"
+						class="swap-icon-button"
+						style="transform: rotate({swapIconTurns * 180}deg)"
+					/>
+				</button>
+			</div>
+
+			{@render tradeSide(buySide)}
 		</div>
 
-		{@render tradeSide(buySide)}
-	</div>
-
-	<div class="trade-footer">
-		<button type="button" class="swap-button">Sign in to Trade</button>
-		<div class="swap-info">
-			<p class="swap-info-label"></p>
+		<div class="trade-footer">
+			<button type="button" class="swap-button">Sign in to trade</button>
+			<div class="swap-info">
+				<p class="swap-info-label"></p>
+			</div>
 		</div>
-	</div>
+	{:else}
+		<div class="trade-advanced">
+			<!-- Advanced mode content goes here -->
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -338,6 +344,16 @@
 		justify-content: flex-start;
 	}
 
+	.trade-advanced {
+		width: 100%;
+		flex: 1;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		justify-content: flex-start;
+	}
+
 	.input-output {
 		width: 100%;
 		flex: 1;
@@ -456,10 +472,6 @@
 		color: var(--color-text-faded);
 		transition: color var(--transition-base);
 		line-height: 1.1;
-	}
-
-	.asset-dropdown:hover .asset-dropdown-icon {
-		color: var(--color-text-muted);
 	}
 
 	.asset-selector-right-item {

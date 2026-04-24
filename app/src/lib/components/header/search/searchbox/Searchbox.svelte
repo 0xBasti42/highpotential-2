@@ -23,16 +23,16 @@
 	}
 
 	.searchbox:hover {
-		border: 1px solid var(--color-border-strong);
+		background-color: #252525;
 		border-left: none;
 	}
 
 	.searchbox:hover p {
-		color: var(--color-text);
+		color: var(--color-text-muted);
 	}
 
 	.searchbox:active {
-		opacity: 0.9;
+		background-color: var(--color-surface-muted);
 		border: 1px solid var(--color-border);
 		border-left: none;
 	}
