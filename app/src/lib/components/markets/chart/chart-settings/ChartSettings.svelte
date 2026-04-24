@@ -26,10 +26,6 @@
 		</div>
 	</div>
 
-	<div class="chart-type-container">
-		<img src="/icons/candles.svg" alt="Candlestick chart" class="chart-type-icon" />
-	</div>
-
 	<div class="indicator-container">
 		<p>ƒ×</p>
 		<p>Indicators</p>
@@ -51,7 +47,6 @@
 	}
 
 	.timeframe-container,
-	.chart-type-container,
 	.indicator-container {
 		height: 50%;
 		display: flex;
@@ -63,11 +58,6 @@
 		justify-content: flex-start;
 		gap: 20px;
 		padding: 0 20px;
-	}
-
-	.chart-type-container {
-		justify-content: center;
-		padding: 0 10px;
 	}
 
 	.indicator-container {
@@ -122,11 +112,6 @@
 
 	.more-timeframes:hover i {
 		transform: rotate(180deg);
-	}
-
-	.chart-type-icon {
-		width: 20px;
-		height: 20px;
 	}
 
 	.indicator-container p:first-child {

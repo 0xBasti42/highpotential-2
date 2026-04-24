@@ -167,7 +167,7 @@
 		<div class="trade-header-right">
 			<div class="trade-header-right-item">
 				<div class="settings-icon-container">
-					<i class="fa-solid fa-gear settings-icon"></i>
+					<img src="/icons/settings.svg" alt="Settings" class="settings-icon" />
 				</div>
 			</div>
 		</div>
@@ -315,21 +315,17 @@
 	}
 
 	.settings-icon-container:active {
-		background-color: var(--color-surface-elevated);
+		opacity: 0.8;
 	}
 
 	.settings-icon {
-		font-size: 12px;
-		color: var(--color-text-faded);
-		cursor: pointer;
+		width: 18px;
+		height: 18px;
+		opacity: 0.5;
 		transition: all var(--transition-base);
 	}
 
 	.settings-icon-container:hover .settings-icon {
-		color: var(--color-text-muted);
-	}
-
-	.settings-icon-container:active .settings-icon {
 		opacity: 0.8;
 	}
 
