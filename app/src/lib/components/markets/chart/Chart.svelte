@@ -223,11 +223,40 @@
 		</section>
 
 		<section class="settings-panel__section">
+			<p class="settings-panel__label">Price</p>
+			<div class="settings-panel__segments">
+				<button type="button" class="segment">Left</button>
+				<button type="button" class="segment segment--active">Right</button>
+			</div>
+		</section>
+
+		<section class="settings-panel__section">
 			<p class="settings-panel__label">Scale</p>
 			<label class="toggle-row">
-				<span>Log scale</span>
+				<span>Regular</span>
+				<input type="checkbox" checked={false}/>
+			</label>
+			<label class="toggle-row">
+				<span>Inverted</span>
+				<input type="checkbox" checked={false}/>
+			</label>
+			<label class="toggle-row">
+				<span>Percentage</span>
+				<input type="checkbox" checked={false}/>
+			</label>
+			<label class="toggle-row">
+				<span>Logarithmic</span>
 				<input type="checkbox" checked={true}/>
 			</label>
+		</section>
+
+		<section class="settings-panel__section">
+			<div class="settings-panel__segments">
+				<button type="button" class="segment">
+					More settings
+					<span class="more-settings-icon"><i class="fa-solid fa-chevron-right"></i></span>
+				</button>
+			</div>
 		</section>
 	</div>
 </div>
@@ -315,7 +344,7 @@
 		position: absolute;
 		z-index: 4;
 		width: 280px;
-		max-height: 420px;
+		max-height: 540px;
 		overflow-y: auto;
 		padding: var(--space-md);
 		background-color: var(--color-surface-muted);
@@ -397,20 +426,33 @@
 		color: var(--color-text-muted);
 		font-size: var(--text-sm);
 		background-color: var(--color-surface-muted);
+		border: 1px solid var(--color-surface-elevated);
 		border-radius: var(--radius-sm);
 		cursor: pointer;
 		transition:
 			color var(--transition-base),
 			background var(--transition-base);
+
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
 	}
 
 	.segment:hover {
 		color: var(--color-text);
+		background-color: var(--color-surface-elevated);
 	}
 
 	.segment--active {
 		color: var(--color-text);
 		background: var(--color-surface-elevated);
+	}
+
+	.more-settings-icon {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		font-size: 10px;
 	}
 
 	.toggle-row {

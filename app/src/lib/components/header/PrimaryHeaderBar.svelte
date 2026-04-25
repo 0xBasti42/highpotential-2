@@ -79,6 +79,7 @@
         border-radius: var(--radius-pill);
         padding: 5px;
         padding-right: 10px; /* 15px || 10px */
+        opacity: 1;
     }
 
     .active-chain-icon {

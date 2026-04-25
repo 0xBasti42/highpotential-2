@@ -1,12 +1,21 @@
 <script lang="ts">
+	import { sidebar } from '$lib/state/sidebar.svelte';
 </script>
 
-<div class="logo">
+<button
+	type="button"
+	class="logo"
+	aria-label="Open menu"
+	aria-expanded={sidebar.isOpen}
+	aria-controls="app-sidebar"
+	onclick={() => sidebar.toggle()}
+>
 	<img src="/brand/icon-dark.svg" alt="Logo" />
-</div>
+</button>
 
 <style>
 	.logo {
+		all: unset;
 		position: relative;
 		width: auto;
 		height: 25px;
@@ -33,10 +42,11 @@
 			opacity var(--transition-base),
 			transform var(--transition-base);
 		pointer-events: none;
+		opacity: 0;
 	}
 
 	.logo:hover::before {
-		opacity: 1;
+		opacity: 0;
 		transform: translate(0, -50%);
 	}
 

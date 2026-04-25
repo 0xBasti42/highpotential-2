@@ -114,7 +114,7 @@
 			>
 				<span class="token-name-text-track">D. Rice</span>
 			</p>
-			<p class="token-club-position">ARS / d-Midfield</p>
+			<p class="token-club-position">ARS<span class="sidebar-footer-sep" aria-hidden="true">·</span>d-Midfield</p>
 		</div>
 		<div class="divider"></div>
 		<button
@@ -496,5 +496,12 @@
 
 	.token-info-right-item-value--negative {
 		color: #ae323e99;
+	}
+
+	.sidebar-footer-sep {
+		color: var(--color-text-faded);
+		font-size: 11px;
+		user-select: none;
+		margin: 0 5px;
 	}
 </style>

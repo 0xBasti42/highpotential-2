@@ -4,6 +4,7 @@
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
 	import AppHeader from '$lib/components/header/Header.svelte';
 	import AppFooter from '$lib/components/footer/Footer.svelte';
+	import Sidebar from '$lib/components/header/sidebar/Sidebar.svelte';
 	import MainColumn from '$lib/components/shell/MainColumn.svelte';
 	import Side from '$lib/components/shell/Side.svelte';
 
@@ -31,6 +32,7 @@
 			<AppFooter />
 		</div>
 	</div>
+	<Sidebar />
 </main>
 
 <style>
