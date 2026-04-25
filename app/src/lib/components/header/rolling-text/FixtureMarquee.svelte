@@ -106,22 +106,22 @@
 	.fixture {
 		flex-shrink: 0;
 		margin-right: 20px;
-		color: var(--color-text-faded);
+		color: var(--color-text-muted);
 		transition: all var(--transition-base);
 		cursor: pointer;
 		letter-spacing: var(--tracking-default);
-	}
-
-	.fixture:hover {
-		color: #737373;
 	}
 
 	.fixture:active {
 		opacity: 0.8;
 	}
 
-	.marquee-track:has(.fixture:hover) .fixture:not(:hover) {
-		color: var(--color-border-strong);
+	.marquee:hover .fixture {
+		color: var(--color-text-faded);
+	}
+
+	.marquee:hover .fixture:hover {
+		color: var(--color-text);
 	}
 
 	.vs {

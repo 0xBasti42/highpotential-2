@@ -1,0 +1,25 @@
+<svg width="1000" height="1000" viewBox="0 0 1000 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_769_63)">
+<rect width="1000" height="1000" fill="url(#paint0_linear_769_63)"/>
+<g clip-path="url(#clip1_769_63)">
+<path d="M500 875C707.107 875 875 707.107 875 500C875 292.893 707.107 125 500 125C292.893 125 125 292.893 125 500C125 707.107 292.893 875 500 875Z" fill="url(#paint1_linear_769_63)"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M357.77 323.39H500.63C587.51 323.39 653.39 370.1 677.9 438.05H722.39V479.12H687.26C687.95 485.6 688.31 492.23 688.31 498.95V499.97C688.31 507.53 687.86 514.97 686.99 522.26H722.39V563.33H677.03C651.89 630.35 586.52 676.61 500.63 676.61H357.77V563.33H308.15V522.26H357.8V479.15H308.15V438.08H357.8L357.77 323.39ZM397.7 563.33V639.77H500.6C564.11 639.77 611.3 609.17 633.26 563.33H397.7ZM645.53 522.26H397.73V479.15H645.59C646.52 485.93 646.97 492.89 646.97 499.97V500.99C646.97 508.22 646.49 515.33 645.53 522.26ZM500.63 360.2C564.44 360.2 611.75 391.61 633.59 438.08H397.73V360.2H500.63Z" fill="white"/>
+</g>
+</g>
+<defs>
+<linearGradient id="paint0_linear_769_63" x1="500" y1="0" x2="500" y2="1000" gradientUnits="userSpaceOnUse">
+<stop stop-color="#F9A606"/>
+<stop offset="1" stop-color="#FBCC5F"/>
+</linearGradient>
+<linearGradient id="paint1_linear_769_63" x1="500" y1="50" x2="500" y2="950" gradientUnits="userSpaceOnUse">
+<stop stop-color="#F9A606"/>
+<stop offset="1" stop-color="#FBCC5F"/>
+</linearGradient>
+<clipPath id="clip0_769_63">
+<rect width="1000" height="1000" fill="white"/>
+</clipPath>
+<clipPath id="clip1_769_63">
+<rect width="750" height="750" fill="white" transform="translate(125 125)"/>
+</clipPath>
+</defs>
+</svg>

@@ -55,12 +55,16 @@
         transition: opacity var(--transition-base);
     }
 
-    .exchange-rate:active {
-        opacity: 0.7;
+    .prices:hover .exchange-rate {
+        opacity: 0.4;
     }
 
-    .prices:has(.exchange-rate:hover) .exchange-rate:not(:hover) {
-        opacity: 0.4;
+    .prices:hover .exchange-rate:hover {
+        opacity: 1;
+    }
+
+    .prices:hover .exchange-rate:active {
+        opacity: 0.8;
     }
 
     .exchange-rate-label {

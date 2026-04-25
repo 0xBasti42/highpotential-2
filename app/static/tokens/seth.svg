@@ -1,11 +1,11 @@
 <svg width="1000" height="1000" viewBox="0 0 1000 1000" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g clip-path="url(#clip0_745_4)">
-<rect width="1000" height="1000" fill="url(#paint0_linear_745_4)"/>
-<mask id="mask0_745_4" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="282" y="180" width="436" height="640">
-<rect x="282.8" y="180" width="434.4" height="640" fill="url(#pattern0_745_4)"/>
+<rect width="1000" height="1000" fill="#101010"/>
+<mask id="mask0_745_4" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="267" y="157" width="466" height="686">
+<rect x="267.596" y="157.6" width="464.808" height="684.8" fill="url(#pattern0_745_4)"/>
 </mask>
 <g mask="url(#mask0_745_4)">
-<rect x="282.8" y="180" width="434.4" height="640" fill="url(#pattern1_745_4)"/>
+<rect x="267.596" y="157.6" width="464.808" height="684.8" fill="url(#pattern1_745_4)"/>
 </g>
 </g>
 <defs>
@@ -15,10 +15,6 @@
 <pattern id="pattern1_745_4" patternContentUnits="objectBoundingBox" width="1" height="1">
 <use xlink:href="#image1_745_4" transform="scale(0.00165289 0.00112233)"/>
 </pattern>
-<linearGradient id="paint0_linear_745_4" x1="500" y1="0" x2="500" y2="1000" gradientUnits="userSpaceOnUse">
-<stop stop-color="#303030"/>
-<stop offset="1" stop-color="#303030"/>
-</linearGradient>
 <clipPath id="clip0_745_4">
 <rect width="1000" height="1000" fill="white"/>
 </clipPath>
