@@ -99,7 +99,7 @@
 		left: 0;
 		height: 1px;
 		border-radius: 1px;
-		background: radial-gradient(circle at 50% 35%, var(--color-primary) 0%, var(--color-primary-light) 65%);
+		background: radial-gradient(circle at 50% 35%, var(--color-primary-light) 0%, var(--color-primary) 75%);
 		transition:
 			left 0.32s cubic-bezier(0.22, 1, 0.36, 1),
 			width 0.32s cubic-bezier(0.22, 1, 0.36, 1),

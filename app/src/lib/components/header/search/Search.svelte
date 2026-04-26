@@ -14,7 +14,7 @@
     <div class="prices">
         {#each rates as rate (rate.label)}
             <div class="exchange-rate">
-                <p class="exchange-rate-label">{rate.label}</p>
+                <p class="exchange-rate-label label-eyebrow">{rate.label}</p>
                 <p class="exchange-rate-value">{rate.value}</p>
             </div>
         {/each}
@@ -49,7 +49,7 @@
         flex-direction: column;
         align-items: flex-start;
         justify-content: center;
-        gap: 5px;
+        gap: 3px;
         flex-shrink: 0;
         cursor: pointer;
         transition: opacity var(--transition-base);
@@ -68,10 +68,6 @@
     }
 
     .exchange-rate-label {
-        font-size: 10px;
-        font-weight: 400;
-        letter-spacing: 1px;
-        color: var(--color-text-muted);
         margin-top: 2px;
         line-height: 1;
     }

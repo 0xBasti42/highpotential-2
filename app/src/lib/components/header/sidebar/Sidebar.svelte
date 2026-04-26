@@ -84,7 +84,7 @@
 		<nav class="sidebar-body">
 			{#each sections as section}
 				<section class="sidebar-section">
-					<h6 class="sidebar-section-title">{section.title}</h6>
+					<h6 class="label-eyebrow">{section.title}</h6>
 					<ul class="sidebar-list">
 						{#each section.items as item}
 							<li>

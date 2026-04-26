@@ -97,7 +97,7 @@
 		{ label: '24h volume', value: '£ 33,894,612' },
 		{ label: 'Staked', value: '£ 3,954,354' },
 		{ label: 'PPM', value: '87.36' },
-		{ label: 'ePBR', value: '♢ 0.4261' },
+		{ label: 'PBR', value: '♢ 0.4261' },
 		{ label: 'Funding', value: '0.0100 (00:06:56)' }
 	];
 </script>
@@ -160,7 +160,7 @@
 		>
 			{#each stats as item}
 				<div class="token-info-right-item">
-					<p class="token-info-right-item-label">{item.label}</p>
+					<p class="token-info-right-item-label label-eyebrow">{item.label}</p>
 					<p
 						class="token-info-right-item-value"
 						class:token-info-right-item-value--positive={item.positive === true}
@@ -396,7 +396,7 @@
 		align-items: center;
 		justify-content: flex-start;
 		gap: 30px;
-		padding: 0 40px 0 20px;
+		padding: 0 30px 0 20px;
 		overflow-x: auto;
 	}
 
@@ -456,7 +456,7 @@
 		align-items: flex-start;
 		justify-content: center;
 		flex: 0 0 auto;
-		gap: 6px;
+		gap: 3px;
 		min-width: max-content;
 	}
 
@@ -469,12 +469,6 @@
 	}
 
 	.token-info-right-item-label {
-		margin: 0;
-		padding: 0;
-		font-size: var(--text-xs);
-		font-weight: 400;
-		letter-spacing: var(--tracking-default);
-		color: var(--color-text-muted);
 		text-align: center;
 		white-space: nowrap;
 	}

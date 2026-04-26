@@ -118,10 +118,10 @@
 	<div class="input-output {config.side}">
 		<div class="info">
 			<div class="info-left">
-				<p class="info-label">{config.label}</p>
+				<p class="label-eyebrow">{config.label}</p>
 			</div>
 			<div class="info-right">
-				<p class="info-balance">{config.infoRight}</p>
+				<p class="label-eyebrow">{config.infoRight}</p>
 			</div>
 		</div>
 
@@ -171,22 +171,24 @@
 		<div class="trade-header-left">
 			<button
 				type="button"
-				class="trade-header-left-item one"
+				class="trade-header-left-item"
 				class:active={mode === 'exchange'}
 				aria-pressed={mode === 'exchange'}
 				onclick={() => selectMode('exchange')}
 			>
 				<p class="trade-header-label">Exchange</p>
 			</button>
+			<div class="divider" aria-hidden="true"></div>
 			<button
 				type="button"
-				class="trade-header-left-item two"
+				class="trade-header-left-item"
 				class:active={mode === 'advanced'}
 				aria-pressed={mode === 'advanced'}
 				onclick={() => selectMode('advanced')}
 			>
 				<p class="trade-header-label">Advanced</p>
 			</button>
+			<div class="divider" aria-hidden="true"></div>
 		</div>
 		<div class="trade-header-right">
 			<div class="trade-header-right-item">
@@ -274,8 +276,7 @@
 		justify-content: center;
 		gap: 10px;
 		padding: 0 20px;
-		border: 1px solid transparent;
-		border-bottom-color: var(--color-border);
+		border-bottom: 1px solid var(--color-border);
 		cursor: pointer;
 		transition:
 			background-color var(--transition-base),
@@ -283,18 +284,9 @@
 			color var(--transition-base);
 	}
 
-	.one {
-		border-right-color: var(--color-border);
-	}
-
-	.one.active,
-	.two.active {
+	.trade-header-left-item.active {
 		border-bottom-color: transparent;
 		background-color: var(--color-surface-elevated);
-	}
-
-	.two.active {
-		border-right-color: var(--color-border);
 	}
 
 	.trade-header-left-item p {
@@ -308,6 +300,25 @@
 	.trade-header-left-item:not(.active):hover p,
 	.trade-header-left-item.active p {
 		color: var(--color-text);
+	}
+
+	/* Vertical separator placed after each tab. Painted only when adjacent
+	   to the active tab. The permanent `border-bottom` keeps the horizontal
+	   line continuous across the divider's column even when its body is
+	   transparent. */
+	.divider {
+		flex-shrink: 0;
+		box-sizing: border-box;
+		width: 1px;
+		height: 100%;
+		background-color: transparent;
+		border-bottom: 1px solid var(--color-border);
+		transition: background-color var(--transition-base);
+	}
+
+	.trade-header-left-item.active + .divider,
+	.divider:has(+ .trade-header-left-item.active) {
+		background-color: var(--color-border);
 	}
 
 	.trade-header-right {

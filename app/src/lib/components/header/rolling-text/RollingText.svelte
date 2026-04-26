@@ -37,7 +37,7 @@
 
 <div class="rolling-text">
 	<div class="rolling-text-left">
-		<p class="rolling-text-title">Matchweek {matchweekNumber}</p>
+		<p class="rolling-text-title label-eyebrow">Matchweek {matchweekNumber}</p>
 		<p class="rolling-text-countdown">{countdown}</p>
 	</div>
 	<div class="rolling-text-right">
@@ -62,14 +62,12 @@
 		flex-direction: column;
 		align-items: flex-start;
 		justify-content: center;
-		gap: 4px;
+		gap: 3px;
 		padding: 0 20px;
 		padding-bottom: 2px;
 	}
 
 	.rolling-text-title {
-		margin: 0;
-		font-size: var(--text-xs);
 		line-height: 1;
 	}
 
