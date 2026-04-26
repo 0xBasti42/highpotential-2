@@ -13,6 +13,9 @@
 		border-left: none;
 		border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
 		height: 30px;
+		/* Smaller laptops (≤1440px) get more visible search width;
+		   larger laptops / external monitors get less since the parent
+		   header has more empty middle space to absorb. */
 		width: 33%;
 		padding: 0 10px 0 20px;
         display: flex;
@@ -21,6 +24,21 @@
         gap: 10px;
 		cursor: text;
 		transition: all var(--transition-base);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	@media (min-width: 1440px) {
+		.searchbox {
+			width: 33%;
+		}
+	}
+
+	@media (min-width: 1600px) {
+		.searchbox {
+			width: 33%;
+		}
 	}
 
 	.searchbox:hover {

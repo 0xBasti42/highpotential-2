@@ -222,7 +222,7 @@
 			<div class="cell cell--num" role="columnheader">Avg Entry</div>
 			<div class="cell cell--num" role="columnheader">Mark</div>
 			<div class="cell cell--num" role="columnheader">PnL</div>
-			<div class="cell cell--num" role="columnheader">PBR Earned</div>
+			<div class="cell cell--num" role="columnheader">Funding</div>
 			<div class="cell cell--num" role="columnheader">Value (GBP)</div>
 			<div class="cell cell--actions" role="columnheader" aria-label="Actions"></div>
 		</div>
@@ -524,11 +524,6 @@
 		max-width: 100%;
 		overflow: hidden;
 		text-overflow: ellipsis;
-	}
-
-	.asset-name-sep {
-		color: var(--color-text-faded);
-		margin: 0 5px;
 	}
 
 	.cell--num {

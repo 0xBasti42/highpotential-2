@@ -134,10 +134,6 @@
 		background-color: var(--color-surface-muted);
 	}
 
-	.indicator-container:hover p {
-		color: var(--color-text);
-	}
-
 	.indicator-container:active {
 		opacity: 0.8;
 	}

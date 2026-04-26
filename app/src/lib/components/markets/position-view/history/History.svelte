@@ -357,7 +357,8 @@
 					<div class="cell cell--tx" role="gridcell">
 						<a
 							class="tx-link"
-							href="#"
+							href={`https://basescan.org/tx/${row.txHash}`} // TODO: replace with custom HP explorer
+							target="_blank"
 							title={row.txHash}
 							aria-label="View transaction {shortHash(row.txHash)} on explorer"
 						>
