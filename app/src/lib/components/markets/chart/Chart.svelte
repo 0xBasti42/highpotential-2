@@ -336,6 +336,10 @@
 		transition: opacity var(--transition-base);
 	}
 
+	.settings-button:hover .settings-button-icon {
+		opacity: 0.8;
+	}
+
 	.settings-button[aria-expanded='true'] .settings-button-icon {
 		opacity: 1;
 	}

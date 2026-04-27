@@ -316,7 +316,7 @@
 	}
 
 	.trade-header-left-item:not(.active):hover {
-		background-color: #20202090;
+		background-color: var(--color-menu-hover);
 	}
 
 	.trade-header-left-item:not(.active):hover p,
@@ -368,7 +368,7 @@
 	}
 
 	.settings-icon-container:hover {
-		background-color: #202020;
+		background-color: var(--color-menu-hover);
 	}
 
 	.settings-icon-container:active {
@@ -380,6 +380,10 @@
 		height: 18px;
 		opacity: 0.5;
 		transition: all var(--transition-base);
+	}
+
+	.settings-icon-container:hover .settings-icon {
+		opacity: 0.8;
 	}
 
 	/* ---------- Body ---------- */
