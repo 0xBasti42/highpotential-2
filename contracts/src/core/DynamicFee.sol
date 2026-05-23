@@ -38,8 +38,8 @@ pragma solidity ^0.8.34;
  *
  */
 
-import { IAggregatorV3 } from "@core/base/interfaces/IAggregatorV3.sol";
-import { SD59x18, exp, sd } from "@prb-math/src/SD59x18.sol";
+import { IAggregatorV3 } from "@core/interfaces/IAggregatorV3.sol";
+import { SD59x18, exp, sd } from "@prb-math/SD59x18.sol";
 
 /**
  * @title DynamicFee | StabilityETH
