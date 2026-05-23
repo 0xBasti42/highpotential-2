@@ -17,6 +17,13 @@ import { ILiquidityMigrator } from "@core/interfaces/ILiquidityMigrator.sol";
 import { DopplerConfig as DC } from "@core/libraries/DopplerConfig.sol";
 import { Events, Errors } from "@core/libraries/EventsAndErrors.sol";
 
+/**
+ * @title Initializer | HighPotential
+ * @author Isla Labs (Tom Jarvis | 0xBasti42)
+ * @notice Initializes new player market liquidity pools using Doppler and Uniswap V4.
+ * @custom:experimental DeFi markets covering EPL, NFL, NBA, and more. | Learn more at https://docs.highpotential.io/
+ * @custom:security-contact security@islalabs.co
+ */
 contract Initializer is AccessControl, AddressBook {
     using CurrencyLibrary for Currency;
     using SoladySafeTransferLib for address;
@@ -44,6 +51,16 @@ contract Initializer is AccessControl, AddressBook {
         setModuleStates();
     }
 
+    function _validateModuleState(address module, ModuleState state) internal view {
+        if (getModuleState[module] != state) {
+            revert Errors.WrongModuleState(module, state, getModuleState[module]);
+        }
+    }
+
+    // --------------------------------------------
+    //  Config
+    // --------------------------------------------
+
     function setModuleStates() internal {
         string[] memory names = new string[](3);
         names[0] = "TOKEN_FACTORY";
@@ -64,6 +81,14 @@ contract Initializer is AccessControl, AddressBook {
         states[3] = ModuleState.Migrator;
 
         _setModuleStates(modules, states);
+    }
+
+    function _setModuleStates(address[] memory modules, ModuleState[] memory states) internal {
+        uint256 length = modules.length;
+        if (length != states.length) revert Errors.ArrayLengthsMismatch();
+        for (uint256 i; i < length; ++i) {
+            getModuleState[modules[i]] = states[i];
+        }
     }
 
     // --------------------------------------------
@@ -158,23 +183,5 @@ contract Initializer is AccessControl, AddressBook {
     function _migrate(address asset, PoolData memory poolData) internal returns (address asset_, PoolData memory poolData_) {
         // TODO: implement
         return (asset, poolData);
-    }
-
-    // --------------------------------------------
-    //  Config
-    // --------------------------------------------
-
-    function _setModuleStates(address[] memory modules, ModuleState[] memory states) internal {
-        uint256 length = modules.length;
-        if (length != states.length) revert Errors.ArrayLengthsMismatch();
-        for (uint256 i; i < length; ++i) {
-            getModuleState[modules[i]] = states[i];
-        }
-    }
-
-    function _validateModuleState(address module, ModuleState state) internal view {
-        if (getModuleState[module] != state) {
-            revert Errors.WrongModuleState(module, state, getModuleState[module]);
-        }
     }
 }
