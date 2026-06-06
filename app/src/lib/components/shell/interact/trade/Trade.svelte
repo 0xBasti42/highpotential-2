@@ -339,8 +339,7 @@
 		transition: background-color var(--transition-base);
 	}
 
-	.trade-header-left-item.active + .divider,
-	.divider:has(+ .trade-header-left-item.active) {
+	.trade-header-left-item.active + .divider {
 		background-color: var(--color-border);
 	}
 
