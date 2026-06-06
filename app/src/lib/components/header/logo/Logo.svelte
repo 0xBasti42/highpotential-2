@@ -60,7 +60,7 @@
 		height: 25px;
 		border-radius: 5px;
 		border: 1px solid var(--color-border);
-		filter: grayscale(1);
+		filter: grayscale(0);
 		/* `cubic-bezier(0.34, 1.56, 0.64, 1)` on transform is "back" easing —
 		   the y-value > 1 makes the interpolation overshoot the target before
 		   settling. That's what gives the press its springy bounce. Border,

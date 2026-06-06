@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onDestroy, tick } from 'svelte';
 	import { signup } from '$lib/state/signup.svelte';
+	import { auth } from '$lib/state/auth.svelte';
+	import { truncateAddress } from '$lib/utils/address';
 
 	type Stage = 'email' | 'otp' | 'success';
 
@@ -151,6 +153,14 @@
 			if (otpString !== '000000') throw new Error('Incorrect code, try again');
 			eoaAddress = '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e';
 			smartWalletAddress = '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
+			/* Sign the user in as soon as verification succeeds — the success
+			   stage below is just confirmation; closing the modal without
+			   clicking "Enter app" leaves them signed in. */
+			auth.signIn({
+				email,
+				ownerEoa: eoaAddress as `0x${string}`,
+				smartWallet: smartWalletAddress as `0x${string}`
+			});
 			stage = 'success';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Verification failed';
@@ -176,10 +186,6 @@
 		stage = 'email';
 		otpDigits = Array(OTP_LENGTH).fill('');
 		error = null;
-	}
-
-	function truncate(addr: string): string {
-		return addr.length > 10 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
 	}
 
 	/* Backdrop click closes the modal. Because the <dialog> uses
@@ -339,11 +345,11 @@
 			<div class="walletCard">
 				<div class="walletRow">
 					<span class="label-eyebrow">Owner EOA</span>
-					<code class="addr">{truncate(eoaAddress)}</code>
+					<code class="addr">{truncateAddress(eoaAddress)}</code>
 				</div>
 				<div class="walletRow">
 					<span class="label-eyebrow">Smart Wallet</span>
-					<code class="addr">{truncate(smartWalletAddress)}</code>
+					<code class="addr">{truncateAddress(smartWalletAddress)}</code>
 				</div>
 			</div>
 			<button type="button" class="primary" onclick={close}>Enter app</button>

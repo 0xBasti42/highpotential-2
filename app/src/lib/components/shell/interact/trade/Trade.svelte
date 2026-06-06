@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { signup } from '$lib/state/signup.svelte';
+	import { auth } from '$lib/state/auth.svelte';
+
 	// type TradeMode = 'exchange' | 'advanced' | 'stake';
 	type TradeMode = 'exchange';
 	type TradeSide = 'input' | 'output';
@@ -127,6 +130,15 @@
 	function selectMode(next: TradeMode) {
 		mode = next;
 	}
+
+	function handleSwapClick() {
+		if (!auth.isSignedIn) {
+			signup.open();
+			return;
+		}
+		// TODO: route through UniversalRouter once the Quoter + swap
+		// pipeline is wired. Today the click is a no-op when signed in.
+	}
 </script>
 
 {#snippet tradeSide(config: TradeSideConfig)}
@@ -247,7 +259,9 @@
 		</div>
 
 		<div class="trade-footer">
-			<button type="button" class="swap-button">Connect</button>
+			<button type="button" class="swap-button" onclick={handleSwapClick}>
+				{auth.isSignedIn ? 'Swap' : 'Connect'}
+			</button>
 			<div class="swap-info">
 				<p class="swap-info-label"></p>
 			</div>
