@@ -458,6 +458,31 @@ button:active {
 	text-transform: uppercase;
 }
 
+/* Numeric typography utilities — two recipes for rendering financial
+   figures, applied as a class on whatever element holds the value.
+   Intentionally only set the typography-related properties so they
+   compose cleanly with whatever layout/colour the call site already
+   defines.
+
+   .numeric-tabular — Inter (the body sans) with tabular-nums so digit
+   columns align across stacked rows. Use for headline / hero figures
+   where the typeface should match surrounding body copy (totals, large
+   price displays, hero balance amounts).
+
+   .numeric-mono — monospace family with tabular-nums + slashed-zero.
+   Use for tabular cell values inside grids / tables where column
+   alignment and visual disambiguation (0 vs O, 1 vs l) matter more
+   than typographic continuity (balance rows, position rows, per-asset
+   amounts, token-info stat values). */
+.numeric-tabular {
+	font-variant-numeric: tabular-nums;
+}
+
+.numeric-mono {
+	font-family: ui-monospace, 'JetBrains Mono', 'SFMono-Regular', Menlo, monospace;
+	font-variant-numeric: tabular-nums slashed-zero;
+}
+
 .primaryFont {
 	font-family: var(--font-sans);
 	letter-spacing: var(--tracking-default);

@@ -147,8 +147,14 @@
 							aria-hidden="true"
 						></i>
 					{:else}
+						<!-- `numeric-mono` keeps this address prefix typographically
+						     consistent with the truncated addresses in the login
+						     flow (AccountSidebar `.row-addr`, SignupModal `.addr`).
+						     All player-market token addresses share the `0x42`
+						     prefix, so mono also aids quick visual scanning when
+						     comparing tokens. -->
 						<span
-							class="copy-button-text"
+							class="copy-button-text numeric-mono"
 							style="font-size: 10px; color: var(--color-text-muted);"
 							in:fade={{ duration: 140 }}
 							out:fade={{ duration: 140 }}
@@ -205,7 +211,8 @@
 			in:fly={{ y: 14, duration: 220 }}
 			out:fade={{ duration: 180 }}
 		>
-			Copied <span style="color: var(--color-text-muted); margin-left: 5px;">{tokenAddress.slice(0, 6)}...{tokenAddress.slice(-4)}</span>
+			<span class="label-eyebrow" style="color: var(--color-text-faded);">Copied</span>
+			<span class="numeric-mono" style="color: var(--color-text); margin-left: 5px;">{tokenAddress.slice(0, 6)}...{tokenAddress.slice(-4)}</span>
 		</div>
 	</div>
 {/if}

@@ -136,17 +136,17 @@
 						     price oracle for ETH + an FX rate for the user's
 						     chosen fiat. Aggregate sum lives here, prefixed with
 						     the currency sign of the default stablecoin. -->
-						<p class="balance-amount">{currency.sign} 0.00</p>
+						<p class="balance-amount numeric-tabular">{currency.sign} 0.00</p>
 					</div>
 					<div class="balance-divider" aria-hidden="true"></div>
 					<ul class="balance-list">
 						<li class="balance-row">
 							<span class="balance-asset">{settings.defaultEthVariant}</span>
-							<span class="balance-figure">0.0000</span>
+							<span class="balance-figure numeric-mono">0.0000</span>
 						</li>
 						<li class="balance-row">
 							<span class="balance-asset">{settings.defaultStablecoin}</span>
-							<span class="balance-figure">0.00</span>
+							<span class="balance-figure numeric-mono">0.00</span>
 						</li>
 					</ul>
 				</div>
@@ -183,7 +183,7 @@
 						>
 							<div class="address-text">
 								<span class="label-eyebrow row-label">Smart Wallet</span>
-								<code class="row-addr">{truncateAddress(auth.smartWallet!)}</code>
+								<code class="row-addr numeric-mono">{truncateAddress(auth.smartWallet!)}</code>
 							</div>
 							<i
 								class="fa-solid row-icon {copiedKey === 'smart'
@@ -201,7 +201,7 @@
 						>
 							<div class="address-text">
 								<span class="label-eyebrow row-label">Owner EOA</span>
-								<code class="row-addr">{truncateAddress(auth.ownerEoa!)}</code>
+								<code class="row-addr numeric-mono">{truncateAddress(auth.ownerEoa!)}</code>
 							</div>
 							<i
 								class="fa-solid row-icon {copiedKey === 'eoa'
@@ -499,19 +499,14 @@
 		font-size: 10px;
 	}
 
-	/* Single-typeface treatment for balance figures: Inter throughout
-	   (the rest of the UI uses Inter), with `tabular-nums` so digits
-	   share equal advance widths and the small per-asset rows below
-	   line up. To swap to mono ("financial terminal" look) instead,
-	   change the `font-family` here and on `.balance-figure` to
-	   `ui-monospace, 'JetBrains Mono', …` and drop `tabular-nums`. */
+	/* Headline balance figure. Typography (Inter + tabular-nums) is
+	   applied via the `.numeric-tabular` utility on the element itself
+	   — this rule only controls size, weight, colour and spacing. */
 	.balance-amount {
 		margin: 0;
-		font-family: var(--font-sans);
 		font-size: 20px;
 		font-weight: 400;
 		letter-spacing: var(--tracking-default);
-		font-variant-numeric: tabular-nums;
 		color: var(--color-text);
 		line-height: 1;
 	}
@@ -543,11 +538,10 @@
 		color: var(--color-text-muted);
 	}
 
-	/* Inherits Inter from the body. `tabular-nums` aligns digit columns
-	   vertically across the rows (ETH / TGBP) so values are scannable
-	   without falling back to monospace. */
+	/* Per-asset cell values. Typography (mono + tabular-nums +
+	   slashed-zero) is applied via the `.numeric-mono` utility on the
+	   element itself — this rule only owns colour. */
 	.balance-figure {
-		font-variant-numeric: tabular-nums;
 		color: var(--color-text);
 	}
 
@@ -710,8 +704,11 @@
 		font-size: 10px;
 	}
 
+	/* Address preview. Typography (mono + tabular-nums + slashed-zero)
+	   is applied via the `.numeric-mono` utility on the element itself
+	   — this rule only owns size and colour. Slashed zero matters for
+	   hex addresses where 0 vs O is otherwise ambiguous. */
 	.row-addr {
-		font-family: ui-monospace, 'JetBrains Mono', 'SFMono-Regular', Menlo, monospace;
 		font-size: 12px;
 		color: var(--color-text);
 	}
