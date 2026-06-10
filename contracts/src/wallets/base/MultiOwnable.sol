@@ -29,7 +29,7 @@ contract MultiOwnable {
     event AddOwner(uint256 indexed index, bytes owner);
     event RemoveOwner(uint256 indexed index, bytes owner);
 
-    modifier onlyOwner() virtual {
+    modifier onlyOwner() {
         _checkOwner();
         _;
     }

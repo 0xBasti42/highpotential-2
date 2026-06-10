@@ -134,7 +134,7 @@
 			aria-label={copyToastVisible ? 'Address copied to clipboard' : 'Copy token contract address'}
 		>
 			{#if copyCheckVisible}
-				<i class="fa-solid fa-check copy-button-icon" aria-hidden="true"></i>
+				<i class="fa-solid fa-check copy-button-icon copy-button-icon--copied" aria-hidden="true"></i>
 			{:else if copyToastVisible}
 				<i class="fa-solid fa-copy copy-button-icon" style="opacity: 0;" aria-hidden="true"></i>
 			{:else}
@@ -367,6 +367,14 @@
 		color: var(--color-text-muted);
 		transition: color var(--transition-base);
 		pointer-events: none;
+	}
+
+	/* Matches the "copied" confirmation colour used by the address rows
+	   in AccountSidebar (`.row-icon--copied`) and the selected-network
+	   tick in NetworkSelector (`.option-check`) — keeps the success
+	   signal consistent across every copy/confirm affordance. */
+	.copy-button-icon--copied {
+		color: var(--color-primary-light);
 	}
 
 	.copy-button-text-stack {

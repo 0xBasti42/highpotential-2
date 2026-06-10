@@ -1,12 +1,40 @@
 <script lang="ts">
     import Searchbox from './searchbox/Searchbox.svelte';
+    import { settings, type Stablecoin } from '$lib/state/settings.svelte';
+    import { currencyOf } from '$lib/utils/currency';
 
-    const rates = [
-        { label: 'USD/GBP', value: '£ 0.7531' },
-        { label: 'SETH/GBP', value: '£ 15.490' },
-        { label: 'ETH/GBP', value: '£ 1549.39' },
-        // { label: 'HPI-TOTAL/GBP', value: '£ 1150.19' }
-    ] as const;
+    /* Fiat-fiat row config keyed on the user's default stablecoin. We
+       can't render `USD/USD` when the default is already USD, so each
+       default carries its own foreign counterpart plus a flipped rate
+       expressed in the default's units (the value is always prefixed
+       with `currency.sign`, so the rate string must match that side).
+
+       Driven off the `Stablecoin` union so adding a new fiat default
+       in `settings.svelte.ts` produces a type error here until we
+       pick its counterpart + rate.
+
+       TODO: the rate strings are placeholders. Wire to the live FX
+       feed once the rates store lands — the `$derived` shape below
+       will pick the new values up without further restructuring. */
+    const FX_BY_DEFAULT: Record<Stablecoin, { foreign: Stablecoin; rate: string }> = {
+        TGBP: { foreign: 'USDC', rate: '0.7531' },
+        USDC: { foreign: 'TGBP', rate: '1.3278' },
+        EURC: { foreign: 'USDC', rate: '1.07122' }
+    };
+
+    /* `$derived` so flipping the default stablecoin in the account
+       sidebar instantly relabels the strip and reprices it in the new
+       currency sign — same pattern as TokenInfo.svelte. */
+    const currency = $derived(currencyOf(settings.defaultStablecoin));
+    const fx = $derived(FX_BY_DEFAULT[settings.defaultStablecoin]);
+    const foreign = $derived(currencyOf(fx.foreign));
+
+    const rates = $derived([
+        { label: `${currency.code}/${foreign.code}`, value: `${currency.sign} ${fx.rate}` },
+        { label: `SETH/${currency.code}`, value: `${currency.sign} 15.490` },
+        { label: `ETH/${currency.code}`, value: `${currency.sign} 1549.39` }
+        // { label: `HPI-TOTAL/${currency.code}`, value: `${currency.sign} 1150.19` }
+    ]);
 </script>
 
 <div class="search">
