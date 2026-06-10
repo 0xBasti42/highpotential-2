@@ -410,12 +410,15 @@
 		transition: all var(--transition-base);
 	}
 
+	/* Hover treatment mirrors SignupModal's `.closeButton`: lighter
+	   surface tile + brighter icon together, no explicit `:active`
+	   rule (the press state inherits the hover look, matching the
+	   close-button signature exactly). `--color-surface-muted` is the
+	   lighter of the two muted surfaces we use; `--color-menu-hover`
+	   reads slightly heavier and is reserved for the listbox / nav
+	   menus where a stronger dwell cue is needed. */
 	.settings-icon-container:hover {
-		background-color: var(--color-menu-hover);
-	}
-
-	.settings-icon-container:active {
-		opacity: 0.8;
+		background-color: var(--color-surface-muted);
 	}
 
 	.settings-icon {
@@ -423,6 +426,13 @@
 		height: 18px;
 		opacity: 0.5;
 		transition: all var(--transition-base);
+	}
+
+	/* `<img>` icon can't be recoloured via CSS `color`, so we ride the
+	   opacity axis instead — same muted → bright muted→text effect the
+	   close button gets from its colour transition. */
+	.settings-icon-container:hover .settings-icon {
+		opacity: 1;
 	}
 
 	/* ---------- Body ---------- */

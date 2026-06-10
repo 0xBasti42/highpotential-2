@@ -362,7 +362,7 @@
 
 		<footer class="account-footer">
 			<button type="button" class="signOut" onclick={handleSignOut}>
-				<i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+				<span class="signOut-icon" aria-hidden="true"></span>
 				<span>Sign out</span>
 			</button>
 		</footer>
@@ -963,5 +963,24 @@
 
 	.signOut:active {
 		opacity: 0.7;
+	}
+
+	/* Masked SVG icon — same technique as `.balance-action-icon` above
+	   (deposit / withdraw). `background-color: currentColor` lets the
+	   icon ride the existing `.signOut` muted → error colour transition
+	   without duplicating the hover rule. */
+	.signOut-icon {
+		display: inline-block;
+		width: 14px;
+		height: 14px;
+		background-color: currentColor;
+		-webkit-mask-image: url('/icons/sign-out.svg');
+		mask-image: url('/icons/sign-out.svg');
+		-webkit-mask-position: center;
+		-webkit-mask-size: contain;
+		-webkit-mask-repeat: no-repeat;
+		mask-position: center;
+		mask-size: contain;
+		mask-repeat: no-repeat;
 	}
 </style>
