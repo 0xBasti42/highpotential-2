@@ -69,49 +69,6 @@ contract HPSmartWalletAuthTest is WalletTestBase {
     }
 
     // --------------------------------------------
-    //  Replayable nonce key
-    // --------------------------------------------
-
-    function test_validateUserOp_revertsReplayableKeyForNormalCall() public {
-        uint256 replayableKey = wallet.REPLAYABLE_NONCE_KEY();
-        UserOperation06 memory op = _baseUserOp(address(wallet), replayableKey << 64);
-        op.callData = abi.encodeCall(HPSmartWallet.execute, (address(0), 0, ""));
-        bytes32 userOpHash = keccak256("user op");
-        op.signature = _eoaSignature(ownerPk, userOpHash, 0);
-
-        vm.prank(entryPointAddr);
-        vm.expectRevert(abi.encodeWithSelector(HPSmartWallet.InvalidNonceKey.selector, replayableKey));
-        wallet.validateUserOp(op, userOpHash, 0);
-    }
-
-    function test_validateUserOp_revertsNormalKeyForCrossChainCall() public {
-        UserOperation06 memory op = _baseUserOp(address(wallet), 0);
-        bytes[] memory calls = new bytes[](0);
-        op.callData = abi.encodeCall(HPSmartWallet.executeWithoutChainIdValidation, (calls));
-        bytes32 userOpHash = keccak256("user op");
-        op.signature = _eoaSignature(ownerPk, userOpHash, 0);
-
-        vm.prank(entryPointAddr);
-        vm.expectRevert(abi.encodeWithSelector(HPSmartWallet.InvalidNonceKey.selector, 0));
-        wallet.validateUserOp(op, userOpHash, 0);
-    }
-
-    function test_validateUserOp_crossChainPathSignsChainAgnosticHash() public {
-        bytes[] memory calls = new bytes[](1);
-        calls[0] = abi.encodeCall(MultiOwnable.addOwnerAddress, (makeAddr("newOwner")));
-
-        UserOperation06 memory op = _baseUserOp(address(wallet), wallet.REPLAYABLE_NONCE_KEY() << 64);
-        op.callData = abi.encodeCall(HPSmartWallet.executeWithoutChainIdValidation, (calls));
-        op.signature = _eoaSignature(ownerPk, wallet.getUserOpHashWithoutChainId(op), 0);
-
-        vm.prank(entryPointAddr);
-        // The provided hash is ignored on this path; the wallet re-derives the chain-agnostic hash.
-        uint256 validationData = wallet.validateUserOp(op, keccak256("ignored"), 0);
-
-        assertEq(validationData, 0);
-    }
-
-    // --------------------------------------------
     //  ERC-1271
     // --------------------------------------------
 
@@ -206,16 +163,5 @@ contract HPSmartWalletAuthTest is WalletTestBase {
 
         assertEq(a.balance, 0.1 ether);
         assertEq(b.balance, 0.2 ether);
-    }
-
-    function test_executeWithoutChainIdValidation_rejectsDisallowedSelector() public {
-        bytes[] memory calls = new bytes[](1);
-        calls[0] = abi.encodeCall(HPSmartWallet.execute, (address(0), 0, ""));
-
-        vm.prank(entryPointAddr);
-        vm.expectRevert(
-            abi.encodeWithSelector(HPSmartWallet.SelectorNotAllowed.selector, HPSmartWallet.execute.selector)
-        );
-        wallet.executeWithoutChainIdValidation(calls);
     }
 }

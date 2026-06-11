@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.34;
 
-import { UUPSUpgradeable } from "@solady/utils/UUPSUpgradeable.sol";
+import { UserOperation06 } from "@account-abstraction/legacy/v06/UserOperation06.sol";
 
 import { HPSmartWallet } from "@src/wallets/HPSmartWallet.sol";
 import { HPSmartWalletFactory } from "@src/wallets/HPSmartWalletFactory.sol";
@@ -225,30 +225,28 @@ contract WalletSecurityFixesTest is WalletTestBase {
     }
 
     // --------------------------------------------
-    //  #85734: upgrades are not replayable across chains
+    //  #85741 / #85734: chain-agnostic replay path removed entirely
     // --------------------------------------------
 
-    function test_canSkipChainIdValidation_excludesUpgrade() public {
+    /// @dev The replayable mechanism (executeWithoutChainIdValidation / canSkipChainIdValidation /
+    ///      getUserOpHashWithoutChainId / REPLAYABLE_NONCE_KEY) is gone, so no cross-chain replay surface exists.
+    ///      A userOp whose callData targets the old replay selector is validated as an ordinary chain-bound op.
+    function test_replayMechanismRemoved() public {
         HPSmartWallet wallet = _createWallet(ownerEOA, 0);
 
-        assertFalse(wallet.canSkipChainIdValidation(UUPSUpgradeable.upgradeToAndCall.selector));
-        // Owner management stays replayable.
-        assertTrue(wallet.canSkipChainIdValidation(MultiOwnable.addOwnerAddress.selector));
-        assertTrue(wallet.canSkipChainIdValidation(MultiOwnable.addOwnerPublicKey.selector));
-        assertTrue(wallet.canSkipChainIdValidation(MultiOwnable.removeOwnerAtIndex.selector));
-    }
-
-    function test_executeWithoutChainIdValidation_rejectsUpgrade() public {
-        HPSmartWallet wallet = _createWallet(ownerEOA, 0);
-
-        bytes[] memory calls = new bytes[](1);
-        calls[0] = abi.encodeCall(UUPSUpgradeable.upgradeToAndCall, (address(walletImplementation), ""));
+        // A non-owner signature is rejected normally (no special replay handling, no revert).
+        (, uint256 strangerPk) = makeAddrAndKey("stranger");
+        UserOperation06 memory op = _baseUserOp(address(wallet), 0);
+        bytes32 userOpHash = keccak256("op");
+        op.signature = _eoaSignature(strangerPk, userOpHash, 0);
 
         vm.prank(entryPointAddr);
-        vm.expectRevert(
-            abi.encodeWithSelector(HPSmartWallet.SelectorNotAllowed.selector, UUPSUpgradeable.upgradeToAndCall.selector)
-        );
-        wallet.executeWithoutChainIdValidation(calls);
+        assertEq(wallet.validateUserOp(op, userOpHash, 0), 1);
+
+        // A valid owner signature over the chain-bound hash validates.
+        op.signature = _eoaSignature(ownerPk, userOpHash, 0);
+        vm.prank(entryPointAddr);
+        assertEq(wallet.validateUserOp(op, userOpHash, 0), 0);
     }
 
     // --------------------------------------------

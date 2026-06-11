@@ -12,7 +12,6 @@ import { AddressBook } from "@core/AddressBook.sol";
 
 import { DefaultCrypto, DefaultStablecoin } from "./types/HPWalletTypes.sol";
 import { MultiOwnable } from "./base/MultiOwnable.sol";
-import { UserOperation06Hash } from "./base/UserOperation06Hash.sol";
 import { WalletERC1271 } from "./base/WalletERC1271.sol";
 
 /// @notice Storage layout used by this contract.
@@ -50,9 +49,6 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
         bytes data;
     }
 
-    /// @dev Upper 192 bits of `UserOperation.nonce` for `executeWithoutChainIdValidation` (Coinbase uses Base chain id).
-    uint256 public constant REPLAYABLE_NONCE_KEY = 8453;
-
     /// @dev keccak256(abi.encode(uint256(keccak256("highpotential.storage.WalletSettings")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant _WALLET_SETTINGS_STORAGE_LOCATION =
         0xde9abc39f8ba6496385be7b2e06f782787ee07b9096c13bc6574d61d02346900;
@@ -65,8 +61,6 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
     event AccountSetUpdated(address indexed positionManager, address indexed vaultManager);
 
     error Initialized();
-    error SelectorNotAllowed(bytes4 selector);
-    error InvalidNonceKey(uint256 key);
 
     modifier onlyEntryPoint() {
         if (msg.sender != entryPoint()) {
@@ -212,6 +206,9 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
     //  ERC-4337
     // --------------------------------------------
 
+    /// @dev All operations are chain-bound: the wallet validates the EntryPoint's chain-scoped `userOpHash`
+    ///      directly. There is no chain-agnostic replay path (owner management and upgrades each require a
+    ///      per-chain signature), which removes the cross-chain replay surface entirely.
     function validateUserOp(UserOperation06 calldata userOp, bytes32 userOpHash, uint256 missingAccountFunds)
         external
         virtual
@@ -219,39 +216,11 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
         payPrefund(missingAccountFunds)
         returns (uint256 validationData)
     {
-        uint256 key = userOp.nonce >> 64;
-
-        if (bytes4(userOp.callData) == this.executeWithoutChainIdValidation.selector) {
-            // Chain-agnostic replay path: gated to the replayable nonce key and to the owner-management
-            // selectors in `canSkipChainIdValidation` (which deliberately excludes `upgradeToAndCall`, so
-            // upgrades stay chain-bound and cannot be replayed onto another chain).
-            userOpHash = getUserOpHashWithoutChainId(userOp);
-            if (key != REPLAYABLE_NONCE_KEY) {
-                revert InvalidNonceKey(key);
-            }
-        } else {
-            if (key == REPLAYABLE_NONCE_KEY) {
-                revert InvalidNonceKey(key);
-            }
-        }
-
         if (_isValidSignature(userOpHash, userOp.signature)) {
             return 0;
         }
 
         return 1;
-    }
-
-    function executeWithoutChainIdValidation(bytes[] calldata calls) external payable virtual onlyEntryPoint {
-        for (uint256 i; i < calls.length; i++) {
-            bytes calldata call = calls[i];
-            bytes4 selector = bytes4(call);
-            if (!canSkipChainIdValidation(selector)) {
-                revert SelectorNotAllowed(selector);
-            }
-
-            _call(address(this), 0, call);
-        }
     }
 
     function execute(address target, uint256 value, bytes calldata data)
@@ -273,28 +242,10 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
         return 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
     }
 
-    function getUserOpHashWithoutChainId(UserOperation06 calldata userOp) public view virtual returns (bytes32) {
-        return keccak256(abi.encode(UserOperation06Hash.hash(userOp), entryPoint()));
-    }
-
     function implementation() public view returns (address $) {
         assembly ("memory-safe") {
             $ := sload(_ERC1967_IMPLEMENTATION_SLOT)
         }
-    }
-
-    /// @notice Selectors permitted on the chain-agnostic replay path. Owner management only — `upgradeToAndCall`
-    ///         is intentionally excluded so an upgrade signed for one chain cannot be replayed onto another where
-    ///         the same implementation address may hold different code.
-    function canSkipChainIdValidation(bytes4 functionSelector) public pure returns (bool) {
-        if (
-            functionSelector == MultiOwnable.addOwnerPublicKey.selector
-                || functionSelector == MultiOwnable.addOwnerAddress.selector
-                || functionSelector == MultiOwnable.removeOwnerAtIndex.selector
-        ) {
-            return true;
-        }
-        return false;
     }
 
     function _call(address target, uint256 value, bytes memory data) internal {

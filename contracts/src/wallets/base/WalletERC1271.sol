@@ -25,8 +25,10 @@ abstract contract WalletERC1271 {
         (name, version) = _domainNameAndVersion();
         chainId = block.chainid;
         verifyingContract = address(this);
-        salt = salt;
-        extensions = extensions;
+        // `salt` and `extensions` are excluded by the 0x0f fields bitmap (matching `domainSeparator()`), so they
+        // are returned as their zero defaults — set explicitly here rather than via misleading self-assignment.
+        salt = bytes32(0);
+        extensions = new uint256[](0);
     }
 
     function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4 result) {
