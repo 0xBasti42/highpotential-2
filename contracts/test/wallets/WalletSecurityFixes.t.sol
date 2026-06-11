@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.34;
 
+import { UUPSUpgradeable } from "@solady/utils/UUPSUpgradeable.sol";
+
 import { HPSmartWallet } from "@src/wallets/HPSmartWallet.sol";
 import { HPSmartWalletFactory } from "@src/wallets/HPSmartWalletFactory.sol";
 import { MultiOwnable } from "@src/wallets/base/MultiOwnable.sol";
@@ -220,5 +222,65 @@ contract WalletSecurityFixesTest is WalletTestBase {
         bytes[] memory owners = _singleOwner(ownerEOA);
         address predicted = factory.getAddress(owners, 0);
         assertEq(address(factory.createAccount(owners, 0)), predicted);
+    }
+
+    // --------------------------------------------
+    //  #85734: upgrades are not replayable across chains
+    // --------------------------------------------
+
+    function test_canSkipChainIdValidation_excludesUpgrade() public {
+        HPSmartWallet wallet = _createWallet(ownerEOA, 0);
+
+        assertFalse(wallet.canSkipChainIdValidation(UUPSUpgradeable.upgradeToAndCall.selector));
+        // Owner management stays replayable.
+        assertTrue(wallet.canSkipChainIdValidation(MultiOwnable.addOwnerAddress.selector));
+        assertTrue(wallet.canSkipChainIdValidation(MultiOwnable.addOwnerPublicKey.selector));
+        assertTrue(wallet.canSkipChainIdValidation(MultiOwnable.removeOwnerAtIndex.selector));
+    }
+
+    function test_executeWithoutChainIdValidation_rejectsUpgrade() public {
+        HPSmartWallet wallet = _createWallet(ownerEOA, 0);
+
+        bytes[] memory calls = new bytes[](1);
+        calls[0] = abi.encodeCall(UUPSUpgradeable.upgradeToAndCall, (address(walletImplementation), ""));
+
+        vm.prank(entryPointAddr);
+        vm.expectRevert(
+            abi.encodeWithSelector(HPSmartWallet.SelectorNotAllowed.selector, UUPSUpgradeable.upgradeToAndCall.selector)
+        );
+        wallet.executeWithoutChainIdValidation(calls);
+    }
+
+    // --------------------------------------------
+    //  #85735: owner count is bounded so prediction stays deployable
+    // --------------------------------------------
+
+    function _manyOwners(uint256 n) internal pure returns (bytes[] memory owners) {
+        owners = new bytes[](n);
+        for (uint256 i; i < n; ++i) {
+            owners[i] = abi.encode(address(uint160(i + 1)));
+        }
+    }
+
+    function test_createAccount_revertsAboveMaxOwners() public {
+        uint256 over = factory.MAX_OWNERS() + 1;
+        bytes[] memory owners = _manyOwners(over);
+
+        vm.expectRevert(abi.encodeWithSelector(HPSmartWalletFactory.TooManyOwners.selector, over));
+        factory.createAccount(owners, 0);
+    }
+
+    function test_getAddress_revertsAboveMaxOwners() public {
+        uint256 over = factory.MAX_OWNERS() + 1;
+        bytes[] memory owners = _manyOwners(over);
+
+        vm.expectRevert(abi.encodeWithSelector(HPSmartWalletFactory.TooManyOwners.selector, over));
+        factory.getAddress(owners, 0);
+    }
+
+    function test_createAccount_succeedsAtMaxOwners() public {
+        bytes[] memory owners = _manyOwners(factory.MAX_OWNERS());
+        HPSmartWallet wallet = factory.createAccount(owners, 0);
+        assertEq(wallet.ownerCount(), factory.MAX_OWNERS());
     }
 }

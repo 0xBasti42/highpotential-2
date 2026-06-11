@@ -19,6 +19,11 @@ import { OwnerValidation } from "./libraries/OwnerValidation.sol";
 ///      handled by indexing the `AccountCreated` event. This removes the unauthenticated, globally-exclusive
 ///      owner indexing that previously allowed registry poisoning and counterfactual-address squatting.
 contract HPSmartWalletFactory is AddressBook, IHPWalletFactory {
+    /// @notice Upper bound on owners per wallet. Generous for the EOA + passkey model while keeping the
+    ///         counterfactual salt bound to an array that is always cheap enough to initialize on-chain (so a
+    ///         predicted, pre-funded address can never be rendered undeployable by an oversized owner set).
+    uint256 public constant MAX_OWNERS = 64;
+
     address public immutable implementation;
 
     /// @notice Wallet-keyed legitimacy flag. Keyed by the CREATE2 address, so it cannot be poisoned by
@@ -32,6 +37,7 @@ contract HPSmartWalletFactory is AddressBook, IHPWalletFactory {
 
     error ImplementationUndeployed();
     error OwnerRequired();
+    error TooManyOwners(uint256 count);
 
     constructor(address implementation_, address addressProvider_) payable AddressBook(addressProvider_) {
         if (implementation_.code.length == 0) revert ImplementationUndeployed();
@@ -86,13 +92,11 @@ contract HPSmartWalletFactory is AddressBook, IHPWalletFactory {
         return _wallets[index];
     }
 
-    /// @notice Paginated read — prefer this (or off-chain `AccountCreated` indexing) for large sets.
+    /// @notice Paginated read. Wallet creation is permissionless, so there is intentionally no unbounded
+    ///         full-array getter (it could be spammed into an unservable size); use this or, preferably, index
+    ///         the `AccountCreated` event off-chain.
     function getWallets(uint256 offset, uint256 limit) external view returns (address[] memory) {
         return _getWalletsSlice(offset, limit);
-    }
-
-    function getAllWallets() external view returns (address[] memory) {
-        return _getWalletsSlice(0, _wallets.length);
     }
 
     function _getWalletsSlice(uint256 offset, uint256 limit) private view returns (address[] memory wallets) {
@@ -115,6 +119,7 @@ contract HPSmartWalletFactory is AddressBook, IHPWalletFactory {
     ///      owner; that self-owner case is caught at deployment by `MultiOwnable._addOwnerAtIndex`.
     function _validateOwners(bytes[] calldata owners) internal pure {
         if (owners.length == 0) revert OwnerRequired();
+        if (owners.length > MAX_OWNERS) revert TooManyOwners(owners.length);
 
         for (uint256 i; i < owners.length; ++i) {
             OwnerValidation.validate(owners[i]);

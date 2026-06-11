@@ -67,7 +67,6 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
     error Initialized();
     error SelectorNotAllowed(bytes4 selector);
     error InvalidNonceKey(uint256 key);
-    error InvalidImplementation(address implementation);
 
     modifier onlyEntryPoint() {
         if (msg.sender != entryPoint()) {
@@ -223,23 +222,12 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
         uint256 key = userOp.nonce >> 64;
 
         if (bytes4(userOp.callData) == this.executeWithoutChainIdValidation.selector) {
+            // Chain-agnostic replay path: gated to the replayable nonce key and to the owner-management
+            // selectors in `canSkipChainIdValidation` (which deliberately excludes `upgradeToAndCall`, so
+            // upgrades stay chain-bound and cannot be replayed onto another chain).
             userOpHash = getUserOpHashWithoutChainId(userOp);
             if (key != REPLAYABLE_NONCE_KEY) {
                 revert InvalidNonceKey(key);
-            }
-
-            bytes[] memory calls = abi.decode(userOp.callData[4:], (bytes[]));
-            for (uint256 i; i < calls.length; i++) {
-                bytes memory callData = calls[i];
-                bytes4 selector = bytes4(callData);
-
-                if (selector == UUPSUpgradeable.upgradeToAndCall.selector) {
-                    address newImplementation;
-                    assembly ("memory-safe") {
-                        newImplementation := mload(add(callData, 36))
-                    }
-                    if (newImplementation.code.length == 0) revert InvalidImplementation(newImplementation);
-                }
             }
         } else {
             if (key == REPLAYABLE_NONCE_KEY) {
@@ -295,12 +283,14 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
         }
     }
 
+    /// @notice Selectors permitted on the chain-agnostic replay path. Owner management only — `upgradeToAndCall`
+    ///         is intentionally excluded so an upgrade signed for one chain cannot be replayed onto another where
+    ///         the same implementation address may hold different code.
     function canSkipChainIdValidation(bytes4 functionSelector) public pure returns (bool) {
         if (
             functionSelector == MultiOwnable.addOwnerPublicKey.selector
                 || functionSelector == MultiOwnable.addOwnerAddress.selector
                 || functionSelector == MultiOwnable.removeOwnerAtIndex.selector
-                || functionSelector == UUPSUpgradeable.upgradeToAndCall.selector
         ) {
             return true;
         }

@@ -35,7 +35,7 @@ contract HPSmartWalletFactoryTest is WalletTestBase {
         assertTrue(factory.isHPWallet(address(wallet)));
         assertEq(factory.walletCount(), 1);
         assertEq(factory.walletAt(0), address(wallet));
-        assertEq(factory.getAllWallets()[0], address(wallet));
+        assertEq(factory.getWallets(0, 1)[0], address(wallet));
     }
 
     function test_isHPWallet_falseForArbitraryAddress() public {
