@@ -21,9 +21,11 @@ interface IWETH9 {
 ///      - native ETH:        no conversion
 ///      - WETH9:             unwrap (1:1, riskless)
 ///      - SETH:              redeem at the wrapper's fixed 100:1 rate (no pool, no slippage)
-///      - other allowlisted: swap via the DEPOSIT_CONVERTER (e.g. Uniswap V4 routes; TGBP multi-hops via USDC)
-///      The allowlist is the AddressProvider token key set — no duplicated state. `minEthOut` is enforced by
-///      the router itself via balance delta, so the converter is not trusted for output accounting.
+///      - other allowlisted: swap via the DEPOSIT_CONVERTER (Aerodrome routes, optionally PSM3-prefixed;
+///                           e.g. TGBP multi-hops via USDC, USDS converts to USDC through the PSM first)
+///      The Swap-class allowlist is the converter's route table (`isConvertible`) — single source of truth,
+///      no duplicated state; WETH/SETH stay special-cased here as deterministic conversions. `minEthOut` is
+///      enforced by the router itself via balance delta, so the converter is not trusted for output accounting.
 contract HPDepositRouter is AddressBook {
     using SafeTransferLib for address;
 
@@ -43,7 +45,6 @@ contract HPDepositRouter is AddressBook {
         Unwrap, // WETH9
         Redeem, // SETH
         Swap // all other allowlisted ERC-20s
-
     }
 
     // --------------------------------------------
@@ -174,26 +175,26 @@ contract HPDepositRouter is AddressBook {
         return HPPaymaster(_getAddress(_addressKey("PAYMASTER")));
     }
 
-    /// @dev Allowlist = the AddressProvider token key set (single source of truth, no duplicated state).
-    ///      Unset keys (e.g. SETH pre-deployment) resolve to zero and simply never match.
+    /// @dev WETH (unwrap) and SETH (redeem) are deterministic, riskless conversions and stay
+    ///      special-cased here; unset keys (e.g. SETH pre-deployment) resolve to zero and simply
+    ///      never match. Swap-class membership is delegated to the converter's route table
+    ///      (single source of truth): listing a new token is a converter `setRoute` call, never a
+    ///      router redeploy. An unset DEPOSIT_CONVERTER key means no token is Swap-class yet.
     function _classify(address token) internal view returns (TokenClass) {
         if (token == address(0)) revert TokenNotAllowed(token);
 
-        string[] memory names = new string[](7);
+        string[] memory names = new string[](2);
         names[0] = "WETH";
         names[1] = "SETH";
-        names[2] = "CBBTC";
-        names[3] = "TGBP";
-        names[4] = "USDC";
-        names[5] = "EURC";
-        names[6] = "DAI";
 
         address[] memory addrs = addressProvider.getManyByName(names);
 
         if (token == addrs[0]) return TokenClass.Unwrap;
         if (token == addrs[1]) return TokenClass.Redeem;
-        for (uint256 i = 2; i < 7; ++i) {
-            if (token == addrs[i]) return TokenClass.Swap;
+
+        address converter = addressProvider.getByName("DEPOSIT_CONVERTER");
+        if (converter != address(0) && IDepositConverter(converter).isConvertible(token)) {
+            return TokenClass.Swap;
         }
 
         revert TokenNotAllowed(token);

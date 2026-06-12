@@ -35,9 +35,12 @@ contract MockWETH is ERC20 {
 }
 
 /// @dev Returns a configurable amount of ETH regardless of input — lets tests exercise both fair
-///      conversion and a misbehaving converter (router must catch the shortfall itself).
+///      conversion and a misbehaving converter (router must catch the shortfall itself). The
+///      `convertible` mapping mirrors the real converter's route table: the router's `_classify`
+///      treats it as the Swap-class allowlist via `isConvertible`.
 contract MockConverter is IDepositConverter {
     uint256 public ethOut;
+    mapping(address token => bool) public convertible;
 
     receive() external payable { }
 
@@ -45,11 +48,19 @@ contract MockConverter is IDepositConverter {
         ethOut = value;
     }
 
+    function setConvertible(address token, bool allowed) external {
+        convertible[token] = allowed;
+    }
+
     function convertToEth(address token, uint256 amount, uint256) external returns (uint256) {
         ERC20(token).transferFrom(msg.sender, address(this), amount);
         (bool ok,) = msg.sender.call{ value: ethOut }("");
         require(ok, "eth transfer failed");
         return ethOut;
+    }
+
+    function isConvertible(address token) external view returns (bool) {
+        return convertible[token];
     }
 }
 
@@ -95,6 +106,10 @@ contract HPDepositRouterTest is WalletTestBase {
         provider.registerName("PAYMASTER", address(paymaster));
         provider.registerName("DEPOSIT_CONVERTER", address(converter));
         vm.stopPrank();
+
+        // Swap-class membership now lives in the converter's route table, not the provider keys.
+        converter.setConvertible(address(usdcToken), true);
+        converter.setConvertible(address(tgbpToken), true);
 
         wallet = _createWallet(ownerEOA, 0);
 
@@ -197,9 +212,7 @@ contract HPDepositRouterTest is WalletTestBase {
         usdcToken.mint(user, amount);
         vm.startPrank(user);
         usdcToken.approve(address(router), amount);
-        vm.expectRevert(
-            abi.encodeWithSelector(HPDepositRouter.InsufficientEthOut.selector, 0.001 ether, 0.002 ether)
-        );
+        vm.expectRevert(abi.encodeWithSelector(HPDepositRouter.InsufficientEthOut.selector, 0.001 ether, 0.002 ether));
         router.depositToken(address(usdcToken), amount, address(wallet), 0.002 ether);
         vm.stopPrank();
     }
@@ -276,6 +289,18 @@ contract HPDepositRouterTest is WalletTestBase {
         vm.prank(user);
         vm.expectRevert(abi.encodeWithSelector(HPDepositRouter.TokenNotAllowed.selector, address(0)));
         router.depositToken(address(0), 100e18, address(wallet), 0);
+    }
+
+    /// @dev Provider token keys no longer grant Swap class — only the converter's route table does.
+    function test_depositToken_revertsWhenConverterDelistsToken() public {
+        converter.setConvertible(address(usdcToken), false);
+
+        usdcToken.mint(user, 100e18);
+        vm.startPrank(user);
+        usdcToken.approve(address(router), 100e18);
+        vm.expectRevert(abi.encodeWithSelector(HPDepositRouter.TokenNotAllowed.selector, address(usdcToken)));
+        router.depositToken(address(usdcToken), 100e18, address(wallet), 0);
+        vm.stopPrank();
     }
 
     function test_setSkimBps_adminOnlyAndCapped() public {
