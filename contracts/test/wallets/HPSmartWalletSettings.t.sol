@@ -118,11 +118,9 @@ contract HPSmartWalletSettingsTest is WalletTestBase {
 
     function test_setDefaultStablecoin_viaOwnerExecuteSelfCall() public {
         vm.prank(ownerEOA);
-        wallet.execute(
-            address(wallet), 0, abi.encodeCall(HPSmartWallet.setDefaultStablecoin, (DefaultStablecoin.DAI))
-        );
+        wallet.execute(address(wallet), 0, abi.encodeCall(HPSmartWallet.setDefaultStablecoin, (DefaultStablecoin.USDS)));
 
-        assertEq(uint8(wallet.defaultStablecoin()), uint8(DefaultStablecoin.DAI));
+        assertEq(uint8(wallet.defaultStablecoin()), uint8(DefaultStablecoin.USDS));
     }
 
     function test_setters_revertForNonOwner() public {
@@ -175,8 +173,8 @@ contract HPSmartWalletSettingsTest is WalletTestBase {
         wallet.setDefaultStablecoin(DefaultStablecoin.EURC);
         assertEq(wallet.defaultStablecoinAddress(), eurc);
 
-        wallet.setDefaultStablecoin(DefaultStablecoin.DAI);
-        assertEq(wallet.defaultStablecoinAddress(), dai);
+        wallet.setDefaultStablecoin(DefaultStablecoin.USDS);
+        assertEq(wallet.defaultStablecoinAddress(), usds);
         vm.stopPrank();
     }
 }

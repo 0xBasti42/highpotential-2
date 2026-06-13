@@ -28,7 +28,7 @@ abstract contract WalletTestBase is Test {
     address internal tgbp = makeAddr("tgbp");
     address internal usdc = makeAddr("usdc");
     address internal eurc = makeAddr("eurc");
-    address internal dai = makeAddr("dai");
+    address internal usds = makeAddr("usds");
 
     function setUp() public virtual {
         (ownerEOA, ownerPk) = makeAddrAndKey("ownerEOA");
@@ -41,7 +41,7 @@ abstract contract WalletTestBase is Test {
         provider.registerName("TGBP", tgbp);
         provider.registerName("USDC", usdc);
         provider.registerName("EURC", eurc);
-        provider.registerName("DAI", dai);
+        provider.registerName("USDS", usds);
         vm.stopPrank();
 
         walletImplementation = new HPSmartWallet(address(provider));

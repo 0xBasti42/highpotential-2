@@ -168,7 +168,7 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
         if (stablecoin == DefaultStablecoin.TGBP) return "TGBP";
         if (stablecoin == DefaultStablecoin.USDC) return "USDC";
         if (stablecoin == DefaultStablecoin.EURC) return "EURC";
-        return "DAI";
+        return "USDS";
     }
 
     function _getWalletSettingsStorage() internal pure returns (WalletSettingsStorage storage $) {
@@ -209,13 +209,11 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
     /// @dev All operations are chain-bound: the wallet validates the EntryPoint's chain-scoped `userOpHash`
     ///      directly. There is no chain-agnostic replay path (owner management and upgrades each require a
     ///      per-chain signature), which removes the cross-chain replay surface entirely.
-    function validateUserOp(UserOperation06 calldata userOp, bytes32 userOpHash, uint256 missingAccountFunds)
-        external
-        virtual
-        onlyEntryPoint
-        payPrefund(missingAccountFunds)
-        returns (uint256 validationData)
-    {
+    function validateUserOp(
+        UserOperation06 calldata userOp,
+        bytes32 userOpHash,
+        uint256 missingAccountFunds
+    ) external virtual onlyEntryPoint payPrefund(missingAccountFunds) returns (uint256 validationData) {
         if (_isValidSignature(userOpHash, userOp.signature)) {
             return 0;
         }
@@ -223,12 +221,11 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
         return 1;
     }
 
-    function execute(address target, uint256 value, bytes calldata data)
-        external
-        payable
-        virtual
-        onlyEntryPointOrOwner
-    {
+    function execute(
+        address target,
+        uint256 value,
+        bytes calldata data
+    ) external payable virtual onlyEntryPointOrOwner {
         _call(target, value, data);
     }
 
@@ -261,13 +258,7 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
     /// @dev Routes signature parsing through a self-`staticcall` so malformed signature blobs, stale/out-of-range
     ///      owner indices, and malformed WebAuthn payloads surface as `0xffffffff` rather than a revert, honoring
     ///      the ERC-1271 contract that failure is reported via the return value.
-    function isValidSignature(bytes32 hash, bytes calldata signature)
-        public
-        view
-        virtual
-        override
-        returns (bytes4)
-    {
+    function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual override returns (bytes4) {
         try this.isValidSignatureExternal(replaySafeHash(hash), signature) returns (bool ok) {
             return ok ? bytes4(0x1626ba7e) : bytes4(0xffffffff);
         } catch {
@@ -277,23 +268,15 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
 
     /// @notice Self-only external wrapper enabling the `try/catch` in `isValidSignature`.
     /// @dev `replaySafeHash` is already applied by the caller; do not re-wrap.
-    function isValidSignatureExternal(bytes32 replaySafeHash_, bytes calldata signature)
-        external
-        view
-        virtual
-        returns (bool)
-    {
+    function isValidSignatureExternal(
+        bytes32 replaySafeHash_,
+        bytes calldata signature
+    ) external view virtual returns (bool) {
         if (msg.sender != address(this)) revert Unauthorized();
         return _isValidSignature(replaySafeHash_, signature);
     }
 
-    function _isValidSignature(bytes32 hash, bytes calldata signature)
-        internal
-        view
-        virtual
-        override
-        returns (bool)
-    {
+    function _isValidSignature(bytes32 hash, bytes calldata signature) internal view virtual override returns (bool) {
         SignatureWrapper memory sigWrapper = abi.decode(signature, (SignatureWrapper));
         bytes memory ownerBytes = ownerAtIndex(sigWrapper.ownerIndex);
 

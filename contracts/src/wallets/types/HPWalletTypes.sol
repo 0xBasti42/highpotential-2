@@ -9,10 +9,10 @@ enum DefaultCrypto {
     SETH
 }
 
-/// @notice User's preferred stablecoin. Resolves via `AddressProvider` keys: TGBP / USDC / EURC / DAI.
+/// @notice User's preferred stablecoin. Resolves via `AddressProvider` keys: TGBP / USDC / EURC / USDS.
 enum DefaultStablecoin {
     TGBP,
     USDC,
     EURC,
-    DAI
+    USDS
 }
